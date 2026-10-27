@@ -23,9 +23,6 @@ public class GlobalExceptionHandler {
 
     /** Tên ràng buộc trong Flyway V1 → thông báo dễ hiểu. Lớp cuối cùng chặn dữ liệu sai dù service bỏ sót. */
     private static final Map<String, String> CONSTRAINT_MESSAGES = Map.ofEntries(
-            Map.entry("ex_sub_overlap", "Hội viên đã có gói tập trùng khoảng thời gian này"),
-            Map.entry("ex_ws_trainer_overlap", "Huấn luyện viên đã có buổi tập khác trong khung giờ này"),
-            Map.entry("ex_ws_member_overlap", "Hội viên đã có buổi tập khác trong khung giờ này"),
             Map.entry("uq_users_email", "Email đã được sử dụng"),
             Map.entry("uq_members_code", "Mã hội viên đã tồn tại"),
             Map.entry("uq_weight_member_day", "Đã có bản ghi cân nặng cho ngày này"),

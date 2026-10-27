@@ -7,3 +7,6 @@
 *.iml
 .DS_Store
 *.log
+**/build/
+**/.gradle/
+*_tmp

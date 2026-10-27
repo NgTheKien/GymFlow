@@ -1,0 +1,12 @@
+# Ghép với compose.yaml khi chạy trên VPS:
+#   docker compose -f compose.yaml -f compose.prod.yaml up -d --build
+# Chỉ mở cổng web; MySQL và backend chỉ nói chuyện trong mạng nội bộ của Docker.
+# !reset = xoá danh sách cổng; !override = thay bằng danh sách mới (cần Docker Compose ≥ 2.24).
+# Cổng web mặc định 3000 để giữ nguyên địa chỉ http://160.187.229.73:3000 (cổng 80 VPS đang dùng cho trang khác).
+services:
+  mysql:
+    ports: !reset []
+  backend:
+    ports: !reset []
+  frontend:
+    ports: !override ["${PROD_FRONTEND_PORT:-3000}:80"]

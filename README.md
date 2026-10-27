@@ -5,10 +5,10 @@
 | Tầng | Công nghệ |
 | --- | --- |
 | Frontend | React 18 + TypeScript, Vite, React Router 6, CSS thuần (design system theo Figma “GymFlow – UI Design”), biểu đồ SVG tự vẽ |
-| Backend | Java 17, Spring Boot 3.3, Spring Security + JWT (HS256), Spring Data JPA, Bean Validation, springdoc OpenAPI (Swagger) |
-| CSDL | PostgreSQL 16 + **Flyway** (migration có version), ràng buộc `EXCLUDE`/`CHECK`/`UNIQUE` ngay trong CSDL |
+| Backend | Java 21, Spring Boot 3.5, Gradle, Spring Security + JWT (HS256), Spring Data JPA, Bean Validation, springdoc OpenAPI (Swagger) |
+| CSDL | MySQL 8.4 + **Flyway** (migration có version), ràng buộc `CHECK`/`UNIQUE`/FK ngay trong CSDL; chống trùng lịch/gói bằng khoá dòng ở service |
 | Đóng gói | Docker, Docker Compose, Nginx (phục vụ SPA + reverse proxy `/api`) |
-| CI | GitHub Actions: `mvn verify` (unit test), `tsc --noEmit`, `vite build`, `docker compose build` |
+| CI | GitHub Actions: `gradle build` (unit test), `tsc --noEmit`, `vite build`, `docker compose build` |
 
 ## 1. Chạy nhanh bằng Docker
 
@@ -17,7 +17,7 @@ cp .env.example .env          # Windows: copy .env.example .env
 docker compose up -d --build
 ```
 
-- Giao diện: http://localhost:3000
+- Giao diện: http://localhost:8081 · MySQL: localhost:3307
 - API: http://localhost:8080/api · Swagger UI: http://localhost:8080/swagger-ui.html · Health: http://localhost:8080/actuator/health
 
 CSDL trống sẽ được Flyway tạo lược đồ, sau đó backend tự sinh dữ liệu mẫu **bám theo ngày hiện tại**: 12 hội viên, 3 HLV (có ca làm), 6 gói (1 gói đã ngừng bán), 23 bài tập, giáo án, lịch tập 8 tuần trước + 2 tuần tới, cân nặng 10 tuần và doanh thu trải 6 tháng. Nhờ vậy lúc nào demo cũng có gói sắp hết hạn, gói hết hạn, gói gia hạn trước, buổi tập hôm nay…
@@ -38,12 +38,12 @@ docker compose down -v            # xoá dữ liệu, lần sau seed lại
 ## 2. Chạy khi phát triển
 
 ```bash
-docker compose up -d db                       # chỉ chạy PostgreSQL
-cd backend && mvn spring-boot:run             # JDK 17 + Maven, cổng 8080
-cd frontend && npm install && npm run dev     # Node 20, http://localhost:5173 (proxy /api → 8080)
+docker compose up -d mysql                    # chỉ chạy MySQL (cổng 3307)
+cd backend && gradle bootRun                  # Gradle 8.14, tự tải JDK 21; cổng 8080
+cd frontend && npm install && npm run dev     # Node 22, http://localhost:5173 (proxy /api → 8080)
 ```
 
-Kiểm thử backend: `cd backend && mvn test` (unit test Mockito, **không cần CSDL**). Kiểm tra kiểu frontend: `npm run typecheck`.
+Kiểm thử backend: `cd backend && gradle test` (unit test Mockito, **không cần CSDL**). Kiểm tra kiểu frontend: `npm run typecheck`.
 
 ## 3. Cấu trúc thư mục
 
@@ -69,7 +69,7 @@ gymflow/
 │   ├── pages/{admin,trainer,member,shared}/
 │   └── styles.css         Design system (token màu từ Figma)
 ├── docs/ERD.md            Sơ đồ ERD (Mermaid) + bảng ràng buộc
-├── docker-compose.yml · .env.example · .github/workflows/ci.yml
+├── compose.yaml · compose.prod.yaml · .env.example · .github/workflows/ci.yml
 ```
 
 ## 4. Chức năng

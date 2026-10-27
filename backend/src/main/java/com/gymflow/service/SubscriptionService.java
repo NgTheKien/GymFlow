@@ -74,11 +74,13 @@ public class SubscriptionService {
         }
         MembershipPlan plan = planService.load(req.planId());
         if (!plan.isActive()) throw ApiException.badRequest("Gói tập này đã ngừng cung cấp");
+        // Khoá dòng hội viên trước khi tính ngày nối tiếp và kiểm tra trùng: hai yêu cầu đồng thời cho cùng
+        // hội viên phải chờ nhau, nên yêu cầu sau luôn thấy gói vừa tạo (cần READ COMMITTED – xem application.yml).
+        subscriptionRepository.lockMember(member.getId());
         SubscriptionPreview p = preview(member.getId(), plan.getId(), req.startDate());
         if (req.startDate() != null && req.startDate().isBefore(mappers.today().minusDays(30))) {
             throw ApiException.badRequest("Ngày bắt đầu không được lùi quá 30 ngày");
         }
-        // Kiểm tra ở service để báo lỗi rõ ràng; ràng buộc ex_sub_overlap trong CSDL là lớp chặn cuối.
         if (subscriptionRepository.existsOverlap(member.getId(), p.startDate(), p.endDate())) {
             throw ApiException.conflict("Hội viên đã có gói tập trùng khoảng " + p.startDate() + " – " + p.endDate()
                     + ". Để trống ngày bắt đầu để gia hạn nối tiếp.");

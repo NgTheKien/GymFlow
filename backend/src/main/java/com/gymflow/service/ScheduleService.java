@@ -76,6 +76,7 @@ public class ScheduleService {
         WorkoutPlan plan = resolvePlan(member, req.planId());
         validateTime(req.startTime(), req.endTime(), true);
 
+        lockForConflictCheck(member, trainer);
         int repeat = req.repeatWeeks() == null ? 0 : req.repeatWeeks();
         List<WorkoutSchedule> created = new ArrayList<>();
         List<String> skipped = new ArrayList<>();
@@ -112,6 +113,7 @@ public class ScheduleService {
         if (s.getStatus() != ScheduleStatus.SCHEDULED) throw ApiException.badRequest("Chỉ dời được buổi đang ở trạng thái \"Đã lên lịch\"");
         Trainer trainer = resolveTrainer(user, s.getMember(), req.trainerId());
         validateTime(req.startTime(), req.endTime(), !req.startTime().equals(s.getStartTime()));
+        lockForConflictCheck(s.getMember(), trainer);
         String problem = conflict(s.getMember(), trainer, req.startTime(), req.endTime(), s.getId());
         if (problem != null) throw ApiException.conflict(problem);
         String before = s.getStartTime().format(FMT);
@@ -196,6 +198,12 @@ public class ScheduleService {
             throw ApiException.badRequest("Buổi tập dài từ " + MIN_MINUTES + " đến " + MAX_MINUTES + " phút");
         }
         if (mustBeFuture && start.isBefore(LocalDateTime.now(clock))) throw ApiException.badRequest("Không xếp lịch vào thời điểm đã qua");
+    }
+
+    /** Khoá hội viên rồi HLV (thứ tự cố định, tránh deadlock) để kiểm tra trùng giờ không bị yêu cầu đồng thời vượt qua. */
+    private void lockForConflictCheck(Member member, Trainer trainer) {
+        scheduleRepository.lockMember(member.getId());
+        if (trainer != null) scheduleRepository.lockTrainer(trainer.getId());
     }
 
     /** Trả về lý do không xếp được, hoặc null nếu hợp lệ. */

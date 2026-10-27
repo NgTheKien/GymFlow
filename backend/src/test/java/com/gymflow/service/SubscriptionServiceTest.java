@@ -10,6 +10,7 @@ import com.gymflow.security.AuthUser;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -104,5 +105,19 @@ class SubscriptionServiceTest {
         service.create(admin, new SubscriptionRequest(1L, 2L, null, null, null));
         verify(subscriptionRepository).saveAndFlush(argThat(s -> s.getPricePaid() == 500_000L
                 && s.getStartDate().equals(TODAY) && s.getEndDate().equals(TODAY.plusDays(29))));
+    }
+
+    @Test
+    void memberRowIsLockedBeforeOverlapCheck() {
+        when(subscriptionRepository.maxEndDate(1L)).thenReturn(null);
+        when(subscriptionRepository.existsOverlap(any(), any(), any())).thenReturn(false);
+        when(subscriptionRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
+        AuthUser admin = new AuthUser(9L, "admin@gymflow.vn", Role.ADMIN, "Admin");
+        service.create(admin, new SubscriptionRequest(1L, 2L, null, null, null));
+        InOrder order = inOrder(subscriptionRepository);
+        order.verify(subscriptionRepository).lockMember(1L);
+        order.verify(subscriptionRepository).maxEndDate(1L);
+        order.verify(subscriptionRepository).existsOverlap(1L, TODAY, TODAY.plusDays(29));
+        order.verify(subscriptionRepository).saveAndFlush(any());
     }
 }

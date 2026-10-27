@@ -1,13 +1,16 @@
-FROM maven:3.9-eclipse-temurin-17 AS build
-WORKDIR /app
-COPY pom.xml .
-RUN mvn -B -ntp dependency:go-offline
+FROM gradle:8.14-jdk21 AS build
+WORKDIR /workspace
+# Tải dependency trước để Docker cache lại khi chỉ sửa code
+COPY build.gradle settings.gradle ./
+RUN gradle dependencies --no-daemon -q > /dev/null || true
 COPY src ./src
-RUN mvn -B -ntp package -DskipTests
+RUN gradle clean bootJar --no-daemon -x test
 
-FROM eclipse-temurin:17-jre
+FROM eclipse-temurin:21-jre
 WORKDIR /app
 ENV TZ=Asia/Ho_Chi_Minh
-COPY --from=build /app/target/gymflow-backend-1.0.0.jar app.jar
+RUN useradd --system --create-home appuser
+COPY --from=build /workspace/build/libs/app.jar app.jar
+USER appuser
 EXPOSE 8080
-ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-jar", "/app/app.jar"]

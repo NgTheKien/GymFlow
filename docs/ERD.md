@@ -148,13 +148,15 @@ erDiagram
 
 | Quy tắc | Cài đặt | Tên ràng buộc |
 | --- | --- | --- |
-| Một hội viên không có 2 gói chồng thời gian (trừ gói đã huỷ) | `EXCLUDE USING gist (member_id WITH =, daterange(start,end,'[]') WITH &&) WHERE NOT cancelled` | `ex_sub_overlap` |
-| HLV không dạy 2 buổi trùng giờ | `EXCLUDE … tsrange(start,end) WITH && WHERE status <> 'CANCELLED'` | `ex_ws_trainer_overlap` |
-| Hội viên không có 2 buổi trùng giờ | như trên theo `member_id` | `ex_ws_member_overlap` |
+| Một hội viên không có 2 gói chồng thời gian (trừ gói đã huỷ) | MySQL không có `EXCLUDE` → `SubscriptionService.create`: khoá dòng hội viên (`SELECT … FOR UPDATE`) rồi `existsOverlap` | (service, HTTP 409) |
+| HLV không dạy 2 buổi trùng giờ | `ScheduleService`: khoá dòng hội viên rồi HLV, sau đó `trainerBusy` (bỏ qua buổi đã huỷ) | (service, HTTP 409) |
+| Hội viên không có 2 buổi trùng giờ | như trên với `memberBusy` | (service, HTTP 409) |
 | Mỗi ngày tối đa 1 bản ghi cân nặng | `UNIQUE (member_id, recorded_date)` | `uq_weight_member_day` |
 | Mỗi buổi tập chỉ ghi nhận hoàn thành 1 lần | `UNIQUE (schedule_id)` | `uq_logs_schedule` |
 | Gói đã bán / bài tập đã dùng không bị xoá cứng | `ON DELETE RESTRICT` | FK `plan_id`, `exercise_id` |
 | Giờ/ngày, phạm vi số (cân nặng, % mỡ, số hiệp, đánh giá…) | `CHECK` | `ck_*` |
+
+Ứng dụng chạy ở mức cô lập READ COMMITTED (`application.yml`) để sau khi chờ khoá, câu kiểm tra trùng thấy ngay dữ liệu vừa commit. CSDL: MySQL 8.4, InnoDB, `utf8mb4`; cột tên gói/bài tập dùng `utf8mb4_0900_as_ci` để phân biệt có dấu – không dấu.
 
 `GlobalExceptionHandler` ánh xạ tên ràng buộc → thông báo tiếng Việt (HTTP 409/400), nên dù có request đi vòng qua service, người dùng vẫn nhận lỗi dễ hiểu.
 
