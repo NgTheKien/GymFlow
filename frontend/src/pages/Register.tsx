@@ -7,6 +7,7 @@ import { Alert, Button, Field, Input, Modal, PasswordInput } from '../components
 import { errMsg, fieldErrs, useAsync } from '../lib/hooks';
 import { AuthArt } from './Login';
 import { PrivacyContent, TermsContent } from './Policies';
+import { ThemeToggle } from '../theme/ThemeToggle';
 
 // Trùng quy tắc với backend (Dtos.PASSWORD_RULE / PHONE_RULE) để báo lỗi ngay, server vẫn kiểm tra lại.
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
@@ -98,6 +99,7 @@ export default function Register() {
         { icon: 'trophy', text: 'Theo dõi lịch tập, giáo án và tiến độ ngay trên điện thoại' },
       ]} />
       <div className="auth-form">
+        <ThemeToggle className="auth-theme" />
         <form className="box stack page" onSubmit={submit} noValidate>
           <Link to="/" className="link small row" style={{ gap: 6, width: 'fit-content' }}><Icon name="arrowLeft" size={15} />Trang chủ</Link>
           <div>

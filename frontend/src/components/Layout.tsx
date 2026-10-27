@@ -7,6 +7,7 @@ import { relativeTime, roleLabel } from '../lib/format';
 import { Brand } from './Brand';
 import { Icon, type IconName } from './Icon';
 import { Avatar, Button } from './ui';
+import { ThemeToggle } from '../theme/ThemeToggle';
 
 interface NavItem { to: string; label: string; icon: IconName; roles: Role[]; group?: string; tab?: boolean }
 
@@ -148,6 +149,7 @@ export function Layout() {
           <div className="crumb">GymFlow / <b>{current?.label ?? 'Chi tiết'}</b></div>
           <div className="spacer" />
           <Clock />
+          <ThemeToggle className="top-theme" />
           <Notifications />
         </header>
         <main className="content" id="main">

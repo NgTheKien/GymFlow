@@ -56,3 +56,11 @@ Không dùng `.display` trong khu ứng dụng; không dùng bảng/thẻ số l
 - Thông tin liên hệ lấy từ `frontend/src/site.ts`; trường rỗng sẽ tự ẩn – không điền số/địa chỉ giả.
 - Không đưa nội dung học thuật (nhóm, lớp, giảng viên, môn học) lên giao diện công khai; thông tin đó chỉ nằm trong README.
 - Tài khoản demo chỉ hiện khi backend bật `DEMO_QUICK_LOGIN` và tài khoản thật sự tồn tại, luôn ghi rõ "Môi trường demo".
+
+## 8. Chế độ sáng / tối
+
+- Ba lựa chọn: Sáng · Tối · Theo hệ thống (mặc định). Nút ở header trang công khai, góc form đăng nhập/đăng ký và topbar ứng dụng (`src/theme/ThemeToggle.tsx`).
+- Lưu ở `localStorage['gf.theme']`; đổi ở một tab thì các tab khác đổi theo. Không gửi lên server nên không ảnh hưởng đăng nhập.
+- Script nhỏ đầu `index.html` đặt `data-theme` trên `<html>` trước khi trang vẽ → không nháy nền tối khi tải lại ở chế độ sáng.
+- Chỉ đổi **token** trong `:root[data-theme='light']` (`styles.css`). Thành phần mới phải dùng `var(--…)`, không viết mã màu cứng. Màu nhấn của biểu đồ, nhóm cơ, trạng thái giữ nguyên ở cả hai chế độ để người dùng nhận ra.
+- Ở chế độ sáng, màu xanh hành động đậm hơn (`#008a3a`) để chữ xanh trên nền trắng vẫn đủ tương phản.

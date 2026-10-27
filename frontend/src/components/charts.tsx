@@ -49,7 +49,7 @@ export function LineChart({ points, height = 220, color = '#00d95b', format = (n
         <path className="line" d={d} stroke={color} />
         {points.map((p, i) => (
           <g key={i}>
-            <circle className="dot" cx={x(i)} cy={y(p.value)} r={points.length > 20 ? 2.5 : 4} fill="#141415" stroke={color} strokeWidth="2" style={{ animationDelay: `${0.6 + i * 0.03}s` }} />
+            <circle className="dot" cx={x(i)} cy={y(p.value)} r={points.length > 20 ? 2.5 : 4} stroke={color} strokeWidth="2" style={{ fill: 'var(--chart-dot)', animationDelay: `${0.6 + i * 0.03}s` }} />
             {i % every === 0 && <text className="axis" x={x(i)} y={height - 6} textAnchor="middle">{p.label}</text>}
             <rect className="hit" x={x(i) - 14} y={pad.t} width={28} height={height - pad.t - pad.b}
               onMouseEnter={() => setTip({ x: (x(i) / W) * 100, y: (y(p.value) / height) * 100, text: `${p.label}: ${format(p.value)}` })} />
@@ -144,7 +144,7 @@ export function Donut({ data, size = 180, center, sub }: { data: { label: string
   return (
     <div className="row row-wrap" style={{ gap: 20, alignItems: 'center' }}>
       <svg viewBox="0 0 180 180" width={size} height={size} role="img" style={{ flex: 'none' }}>
-        <circle cx="90" cy="90" r={r} fill="none" stroke="#2e3035" strokeWidth="18" />
+        <circle cx="90" cy="90" r={r} fill="none" style={{ stroke: 'var(--chart-track)' }} strokeWidth="18" />
         {total > 0 && data.map((d, i) => {
           const len = (d.value / total) * c;
           const el = <circle key={i} className="ring-arc" cx="90" cy="90" r={r} fill="none" stroke={PALETTE[i % PALETTE.length]} strokeWidth="18"
@@ -172,7 +172,7 @@ export function Ring({ value, max = 100, size = 120, label, sub, color = '#00d95
   const pct = Math.max(0, Math.min(1, value / (max || 1)));
   return (
     <svg viewBox="0 0 120 120" width={size} height={size} role="img" aria-label={label}>
-      <circle cx="60" cy="60" r={r} fill="none" stroke="#2e3035" strokeWidth="10" />
+      <circle cx="60" cy="60" r={r} fill="none" style={{ stroke: 'var(--chart-track)' }} strokeWidth="10" />
       <circle className="ring-arc" cx="60" cy="60" r={r} fill="none" stroke={color} strokeWidth="10" strokeLinecap="round"
         strokeDasharray={c} strokeDashoffset={c * (1 - pct)} transform="rotate(-90 60 60)" />
       <text className="ring-label" x="60" y={sub ? 62 : 68} textAnchor="middle" style={{ fontSize: 20 }}>{label ?? `${Math.round(pct * 100)}%`}</text>

@@ -8,6 +8,7 @@ import { Icon, type IconName } from '../components/Icon';
 import { Alert, Button, Field, PasswordInput } from '../components/ui';
 import { errMsg, fieldErrs, useAsync } from '../lib/hooks';
 import { SITE } from '../site';
+import { ThemeToggle } from '../theme/ThemeToggle';
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const ROLE_ICON: Record<Role, IconName> = { ADMIN: 'shield', TRAINER: 'badge', MEMBER: 'user' };
@@ -83,6 +84,7 @@ export default function Login() {
     <div className="auth">
       <AuthArt />
       <div className="auth-form">
+        <ThemeToggle className="auth-theme" />
         <form className="box stack page" onSubmit={submit} noValidate>
           <Link to="/" className="link small row" style={{ gap: 6, width: 'fit-content' }}><Icon name="arrowLeft" size={15} />Trang chủ</Link>
           <div>

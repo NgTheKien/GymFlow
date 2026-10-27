@@ -7,6 +7,7 @@ import { useToast } from '../components/Toast';
 import { Alert, Button, Field, Input, PasswordInput } from '../components/ui';
 import { errMsg, fieldErrs } from '../lib/hooks';
 import { AuthArt } from './Login';
+import { ThemeToggle } from '../theme/ThemeToggle';
 
 const PW_RULE = /^(?=.*[A-Za-z])(?=.*\d).{8,72}$/;
 
@@ -58,6 +59,7 @@ export default function ForgotPassword() {
     <div className="auth">
       <AuthArt />
       <div className="auth-form">
+        <ThemeToggle className="auth-theme" />
         <div className="box stack page">
           <Link to="/login" className="link small row" style={{ gap: 6 }}><Icon name="arrowLeft" size={15} />Quay lại đăng nhập</Link>
           <div>

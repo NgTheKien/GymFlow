@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Brand } from '../components/Brand';
 import { Icon } from '../components/Icon';
 import { SITE } from '../site';
+import { ThemeToggle } from '../theme/ThemeToggle';
 
 /** Nội dung điều khoản & chính sách – dùng chung cho trang /policies và hộp thoại trong form đăng ký. */
 export function TermsContent() {
@@ -39,6 +40,7 @@ export default function Policies() {
       <nav className="landing-nav">
         <Link to="/"><Brand /></Link>
         <div style={{ flex: 1 }} />
+        <ThemeToggle />
         <Link className="btn btn-ghost btn-sm" to="/"><Icon name="arrowLeft" />Trang chủ</Link>
       </nav>
       <main className="section page legal-page">

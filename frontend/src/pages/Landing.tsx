@@ -9,6 +9,7 @@ import { Button } from '../components/ui';
 import { durationLabel, fmtMoney } from '../lib/format';
 import { useAsync } from '../lib/hooks';
 import { SITE } from '../site';
+import { ThemeToggle } from '../theme/ThemeToggle';
 
 const DISCIPLINES = ['Thể hình', 'Giảm mỡ', 'Sức mạnh', 'Powerlifting', 'Yoga', 'Phục hồi', 'Cardio', 'PT 1 kèm 1'];
 
@@ -71,6 +72,7 @@ export default function Landing() {
             )}
           </div>
         </div>
+        <ThemeToggle className="nav-theme" />
         <Button className="nav-toggle" variant="ghost" icon={menu ? 'x' : 'menu'} aria-label={menu ? 'Đóng menu' : 'Mở menu'} aria-expanded={menu} onClick={() => setMenu((m) => !m)} />
       </nav>
 
