@@ -3,6 +3,11 @@
 # Chỉ mở cổng web; MySQL và backend chỉ nói chuyện trong mạng nội bộ của Docker.
 # !reset = xoá danh sách cổng; !override = thay bằng danh sách mới (cần Docker Compose ≥ 2.24).
 # Cổng web mặc định 3000 để giữ nguyên địa chỉ http://160.187.229.73:3000 (cổng 80 VPS đang dùng cho trang khác).
+#
+# Tên miền riêng + HTTPS, không lộ IP (Cloudflare Tunnel):
+#   1. Thêm TUNNEL_TOKEN=... vào .env (lấy ở Cloudflare Zero Trust → Networks → Tunnels)
+#   2. Trong tunnel, Public Hostname trỏ tới http://frontend:80
+#   3. docker compose -f compose.yaml -f compose.prod.yaml --profile tunnel up -d
 services:
   mysql:
     ports: !reset []
@@ -10,3 +15,14 @@ services:
     ports: !reset []
   frontend:
     ports: !override ["${PROD_FRONTEND_PORT:-3000}:80"]
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: gymflow-tunnel
+    restart: unless-stopped
+    profiles: ["tunnel"]
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:-}
+    depends_on:
+      - frontend

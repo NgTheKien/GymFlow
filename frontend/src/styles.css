@@ -508,7 +508,7 @@ table.table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .auth-art .slashes i:nth-child(2) { left: 30%; opacity: 0.05; animation-duration: 12s; }
 .auth-art .slashes i:nth-child(3) { left: 62%; width: 18px; opacity: 0.1; animation-duration: 7s; }
 @keyframes slide { from { transform: skewX(var(--slant)) translateX(-140%); } to { transform: skewX(var(--slant)) translateX(1400%); } }
-.auth-art h1 { font-size: 46px; line-height: 1.05; max-width: 14ch; }
+.auth-art h1 { font-size: 46px; line-height: 1.15; max-width: 14ch; }
 .auth-form { display: grid; place-items: center; padding: 32px; }
 .auth-form .box { width: min(400px, 100%); }
 .auth-form h2 { font-size: 28px; }
@@ -529,9 +529,11 @@ table.table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .public { min-height: 100vh; background: var(--canvas); }
 .kicker { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 12px; color: var(--primary-bright); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.16em; }
 .kicker::before { content: ''; width: 18px; height: 3px; background: var(--primary-bright); transform: skewX(var(--slant)); }
-.display { font-size: clamp(44px, 7.2vw, 104px); line-height: 0.92; font-weight: 800; text-transform: uppercase; letter-spacing: -0.035em; }
-.display-sm { font-size: clamp(28px, 3.6vw, 48px); line-height: 1; font-weight: 800; text-transform: uppercase; letter-spacing: -0.025em; max-width: 22ch; }
-.section h2.display-sm { font-size: clamp(28px, 3.6vw, 48px); }
+/* Chữ hoa tiếng Việt có dấu chồng (Ậ, Ộ, Ữ) cao hơn chữ Latin: line-height < 1.1 làm dấu đè lên dòng trên */
+.display { font-size: clamp(38px, 5.2vw, 76px); line-height: 1.12; font-weight: 800; text-transform: uppercase; letter-spacing: -0.03em; }
+.display .grad-text, .display-sm .grad-text { display: inline-block; padding-top: 0.08em; }
+.display-sm { font-size: clamp(28px, 3.6vw, 48px); line-height: 1.15; font-weight: 800; text-transform: uppercase; letter-spacing: -0.025em; max-width: 22ch; }
+.section h2.display-sm { font-size: clamp(28px, 3.6vw, 48px); margin-bottom: 4px; }
 .lead { color: var(--muted); font-size: 17px; max-width: 52ch; margin-top: 20px; }
 .center { text-align: center; }
 .link-btn { padding: 0; border: 0; background: none; color: var(--secondary); font-weight: 700; cursor: pointer; }
