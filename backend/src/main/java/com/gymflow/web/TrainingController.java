@@ -1,7 +1,6 @@
 package com.gymflow.web;
 
-import com.gymflow.domain.Level;
-import com.gymflow.domain.MuscleGroup;
+import com.gymflow.domain.*;
 import com.gymflow.dto.Dtos.*;
 import com.gymflow.security.CurrentUser;
 import com.gymflow.service.ExerciseService;
@@ -29,8 +28,29 @@ public class TrainingController {
     public List<ExerciseResponse> exercises(@RequestParam(defaultValue = "") String q,
                                             @RequestParam(required = false) MuscleGroup muscleGroup,
                                             @RequestParam(required = false) Level level,
+                                            @RequestParam(required = false) ExerciseLocation location,
+                                            @RequestParam(required = false) ExerciseGoal goal,
+                                            @RequestParam(required = false) ReviewStatus reviewStatus,
                                             @RequestParam(defaultValue = "false") boolean includeHidden) {
-        return exerciseService.list(CurrentUser.get(), q, muscleGroup, level, includeHidden);
+        return exerciseService.list(CurrentUser.get(),
+                new ExerciseService.Filter(q, muscleGroup, level, location, goal, reviewStatus, includeHidden));
+    }
+
+    @GetMapping("/api/exercises/{id}")
+    public ExerciseResponse exercise(@PathVariable Long id) {
+        return exerciseService.get(CurrentUser.get(), id);
+    }
+
+    @GetMapping("/api/content-sources")
+    @PreAuthorize("hasAnyRole('ADMIN','TRAINER')")
+    public List<SourceResponse> contentSources() {
+        return exerciseService.sources();
+    }
+
+    @PutMapping("/api/exercises/{id}/review")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ExerciseResponse reviewExercise(@PathVariable Long id, @Valid @RequestBody ReviewRequest req) {
+        return exerciseService.review(CurrentUser.get(), id, req);
     }
 
     @PostMapping("/api/exercises")
@@ -43,7 +63,7 @@ public class TrainingController {
     @PutMapping("/api/exercises/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','TRAINER')")
     public ExerciseResponse updateExercise(@PathVariable Long id, @Valid @RequestBody ExerciseRequest req) {
-        return exerciseService.update(id, req);
+        return exerciseService.update(CurrentUser.get(), id, req);
     }
 
     @PutMapping("/api/exercises/{id}/hidden")

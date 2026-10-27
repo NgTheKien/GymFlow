@@ -1,13 +1,14 @@
 import { Link } from 'react-router-dom';
 import { Icon } from '../components/Icon';
+import { t } from '../i18n';
 
 function ErrorPage({ code, title, desc }: { code: string; title: string; desc: string }) {
   return (
     <div className="page empty" style={{ minHeight: '60vh', justifyContent: 'center' }}>
       <div className="big-code grad-text">{code}</div>
-      <h4 style={{ fontSize: 22 }}>{title}</h4>
-      <p className="muted">{desc}</p>
-      <Link to="/dashboard" className="btn btn-primary mt-8"><Icon name="home" /><span>Về trang tổng quan</span></Link>
+      <h4 style={{ fontSize: 22 }}>{t(title)}</h4>
+      <p className="muted">{t(desc)}</p>
+      <Link to="/dashboard" className="btn btn-primary mt-8"><Icon name="home" /><span>{t('Về trang tổng quan')}</span></Link>
     </div>
   );
 }

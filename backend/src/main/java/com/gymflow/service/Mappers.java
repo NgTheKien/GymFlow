@@ -90,7 +90,56 @@ public class Mappers {
         return new ExerciseResponse(e.getId(), e.getName(), e.getMuscleGroup(), e.getEquipment(), e.getLevel(),
                 e.getDescription(), e.getInstructions(), e.getVideoUrl(), e.isHidden(),
                 planItemRepository.countByExerciseId(e.getId()),
-                e.getCreatedBy() == null ? null : e.getCreatedBy().getFullName());
+                e.getCreatedBy() == null ? null : e.getCreatedBy().getFullName(),
+                e.getNameEn(), e.getAliases(), e.getSecondaryMuscles(), e.getLocation(), parseGoals(e.getGoals()),
+                e.getBreathing(), e.getCommonMistakes(), e.getSafetyNotes(), e.getVariations(), e.getSuggestedDose(),
+                e.getContentOrigin(), e.getReviewStatus(), e.getReviewNote(),
+                e.getReviewedBy() == null ? null : e.getReviewedBy().getFullName(), e.getReviewedAt(), e.getUpdatedAt(),
+                sources(e.getSources()));
+    }
+
+    // ---------- Nguồn & kho kiến thức ----------
+    public SourceResponse source(ContentSource s) {
+        return new SourceResponse(s.getId(), s.getCode(), s.getPublisher(), s.getTitle(), s.getUrl(), s.getLicense(),
+                s.getLicenseUrl(), s.isLicenseVerified(), s.getAttribution(), s.getPublisherReviewed(), s.getAccessedAt());
+    }
+
+    public List<SourceResponse> sources(java.util.Collection<ContentSource> list) {
+        return list.stream().sorted(Comparator.comparing(ContentSource::getId)).map(this::source).toList();
+    }
+
+    public ArticleSummary articleSummary(Article a) {
+        return new ArticleSummary(a.getId(), a.getSlug(), a.getTitle(), a.getCategory(), a.getSummary(), a.getPublishedAt());
+    }
+
+    /** internal = false: trang công khai, ẩn ghi chú duyệt và tên người duyệt/tác giả. */
+    public ArticleResponse article(Article a, boolean internal) {
+        return new ArticleResponse(a.getId(), a.getSlug(), a.getTitle(), a.getCategory(), a.getSummary(), a.getBody(),
+                a.getContentOrigin(), a.getStatus(),
+                internal ? a.getReviewNote() : null,
+                internal && a.getAuthor() != null ? a.getAuthor().getFullName() : null,
+                internal && a.getAuthor() != null ? a.getAuthor().getId() : null,
+                internal && a.getReviewedBy() != null ? a.getReviewedBy().getFullName() : null,
+                a.getReviewedAt(), a.getPublishedAt(),
+                internal ? a.getCreatedAt() : null, a.getUpdatedAt(), sources(a.getSources()));
+    }
+
+    public static List<ExerciseGoal> parseGoals(String csv) {
+        if (csv == null || csv.isBlank()) return List.of();
+        return java.util.Arrays.stream(csv.split(",")).map(String::trim).filter(s -> !s.isEmpty())
+                .map(s -> {
+                    try {
+                        return ExerciseGoal.valueOf(s);
+                    } catch (IllegalArgumentException ex) {
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull).toList();
+    }
+
+    public static String joinGoals(List<ExerciseGoal> goals) {
+        if (goals == null || goals.isEmpty()) return null;
+        return goals.stream().distinct().map(Enum::name).collect(Collectors.joining(","));
     }
 
     // ---------- Workout plan ----------

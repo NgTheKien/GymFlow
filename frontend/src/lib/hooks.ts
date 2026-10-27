@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ApiError } from '../api/client';
+import { t } from '../i18n';
 
 /** Tải dữ liệu theo deps; trả về data, lỗi, trạng thái và hàm reload. */
 export function useAsync<T>(fn: () => Promise<T>, deps: unknown[]) {
@@ -18,7 +19,7 @@ export function useAsync<T>(fn: () => Promise<T>, deps: unknown[]) {
       const res = await run();
       if (id === seq.current) setData(res);
     } catch (e) {
-      if (id === seq.current) setError(e instanceof ApiError ? e.message : 'Có lỗi xảy ra');
+      if (id === seq.current) setError(t(e instanceof ApiError ? e.message : 'Có lỗi xảy ra'));
     } finally {
       if (id === seq.current) setLoading(false);
     }
@@ -34,5 +35,7 @@ export function useDebounced<T>(value: T, ms = 300) {
   return v;
 }
 
-export const errMsg = (e: unknown) => (e instanceof ApiError ? e.message : 'Có lỗi xảy ra');
-export const fieldErrs = (e: unknown): Record<string, string> => (e instanceof ApiError ? e.fieldErrors : {});
+/** Thông báo từ backend là tiếng Việt; bản tiếng Anh tra trong từ điển, thiếu thì giữ nguyên. */
+export const errMsg = (e: unknown) => t(e instanceof ApiError ? e.message : 'Có lỗi xảy ra');
+export const fieldErrs = (e: unknown): Record<string, string> =>
+  (e instanceof ApiError ? Object.fromEntries(Object.entries(e.fieldErrors).map(([k, v]) => [k, t(v)])) : {});

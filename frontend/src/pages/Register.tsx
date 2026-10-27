@@ -8,6 +8,7 @@ import { errMsg, fieldErrs, useAsync } from '../lib/hooks';
 import { AuthArt } from './Login';
 import { PrivacyContent, TermsContent } from './Policies';
 import { ThemeToggle } from '../theme/ThemeToggle';
+import { t } from '../i18n';
 
 // Trùng quy tắc với backend (Dtos.PASSWORD_RULE / PHONE_RULE) để báo lỗi ngay, server vẫn kiểm tra lại.
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
@@ -39,7 +40,7 @@ function Strength({ pw }: { pw: string }) {
   return (
     <div className="row" style={{ gap: 4 }} aria-live="polite">
       {[1, 2, 3, 4, 5].map((i) => <i key={i} style={{ flex: 1, height: 4, borderRadius: 2, background: i <= s ? color : 'var(--surface)' }} />)}
-      <span className="tiny faint" style={{ marginLeft: 6, minWidth: 34 }}>{s >= 4 ? 'Mạnh' : s >= 3 ? 'Khá' : 'Yếu'}</span>
+      <span className="tiny faint" style={{ marginLeft: 6, minWidth: 34 }}>{t(s >= 4 ? 'Mạnh' : s >= 3 ? 'Khá' : 'Yếu')}</span>
     </div>
   );
 }
@@ -101,11 +102,11 @@ export default function Register() {
       <div className="auth-form">
         <ThemeToggle className="auth-theme" />
         <form className="box stack page" onSubmit={submit} noValidate>
-          <Link to="/" className="link small row" style={{ gap: 6, width: 'fit-content' }}><Icon name="arrowLeft" size={15} />Trang chủ</Link>
+          <Link to="/" className="link small row" style={{ gap: 6, width: 'fit-content' }}><Icon name="arrowLeft" size={15} />{t('Trang chủ')}</Link>
           <div>
-            <div className="kicker">Hội viên mới</div>
-            <h2>Đăng ký hội viên</h2>
-            <p className="muted mt-8">Đã có tài khoản? <Link to="/login" className="link">Đăng nhập</Link></p>
+            <div className="kicker">{t('Hội viên mới')}</div>
+            <h2>{t('Đăng ký hội viên')}</h2>
+            <p className="muted mt-8">{t('Đã có tài khoản?')} <Link to="/login" className="link">{t('Đăng nhập')}</Link></p>
           </div>
 
           {closed ? (
@@ -124,8 +125,8 @@ export default function Register() {
                     value={f.email} onChange={(e) => set('email', e.target.value)} placeholder="ban@email.com" aria-invalid={!!errors.email} />
                 </div>
               </Field>
-              {errors.email === 'Email đã được sử dụng' && (
-                <p className="tiny muted" style={{ marginTop: -6 }}>Email này đã có tài khoản. <Link className="link" to="/login" state={{ registered: f.email.trim() }}>Đăng nhập</Link> hoặc <Link className="link" to="/forgot-password">khôi phục mật khẩu</Link>.</p>
+              {errors.email === t('Email đã được sử dụng') && (
+                <p className="tiny muted" style={{ marginTop: -6 }}>{t('Email này đã có tài khoản.')} <Link className="link" to="/login" state={{ registered: f.email.trim() }}>{t('Đăng nhập')}</Link> {t('hoặc')} <Link className="link" to="/forgot-password">{t('khôi phục mật khẩu')}</Link>.</p>
               )}
               <Field label="Số điện thoại" error={errors.phone} hint="Không bắt buộc – để huấn luyện viên liên hệ khi đổi lịch">
                 <div className="input-icon">
@@ -146,12 +147,12 @@ export default function Register() {
               <div className="field">
                 <label className="check" style={{ alignItems: 'flex-start', color: 'var(--ink)' }}>
                   <input name="acceptTerms" type="checkbox" checked={f.acceptTerms} onChange={(e) => set('acceptTerms', e.target.checked)} style={{ marginTop: 2 }} />
-                  <span className="small">Tôi đồng ý với <button type="button" className="link-btn" onClick={() => setDoc('terms')}>Điều khoản sử dụng</button> và <button type="button" className="link-btn" onClick={() => setDoc('privacy')}>Chính sách bảo mật</button></span>
+                  <span className="small">{t('Tôi đồng ý với')} <button type="button" className="link-btn" onClick={() => setDoc('terms')}>{t('Điều khoản sử dụng')}</button> {t('và')} <button type="button" className="link-btn" onClick={() => setDoc('privacy')}>{t('Chính sách bảo mật')}</button></span>
                 </label>
                 {errors.acceptTerms && <div className="err">{errors.acceptTerms}</div>}
               </div>
               <Button type="submit" variant="primary" size="lg" block loading={busy}>Tạo tài khoản</Button>
-              <p className="tiny faint center">Tài khoản tự đăng ký luôn là hội viên. Tài khoản huấn luyện viên và quản lý do phòng tập cấp.</p>
+              <p className="tiny faint center">{t('Tài khoản tự đăng ký luôn là hội viên. Tài khoản huấn luyện viên và quản lý do phòng tập cấp.')}</p>
             </>
           )}
         </form>

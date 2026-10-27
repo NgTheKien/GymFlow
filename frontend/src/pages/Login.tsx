@@ -9,6 +9,7 @@ import { Alert, Button, Field, PasswordInput } from '../components/ui';
 import { errMsg, fieldErrs, useAsync } from '../lib/hooks';
 import { SITE } from '../site';
 import { ThemeToggle } from '../theme/ThemeToggle';
+import { t } from '../i18n';
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const ROLE_ICON: Record<Role, IconName> = { ADMIN: 'shield', TRAINER: 'badge', MEMBER: 'user' };
@@ -28,12 +29,12 @@ export function AuthArt({ title, lines }: { title?: [string, string]; lines?: { 
         <BrandMark /><span className="brand-name">Gym<b>Flow</b></span>
       </Link>
       <div style={{ position: 'relative' }}>
-        <h1 className="display">{a}<br /><span className="grad-text">{b}</span></h1>
+        <h1 className="display">{t(a)}<br /><span className="grad-text">{t(b)}</span></h1>
         <div className="feature-list mt-24">
-          {list.map((l) => <div key={l.text}><Icon name={l.icon} />{l.text}</div>)}
+          {list.map((l) => <div key={l.text}><Icon name={l.icon} />{t(l.text)}</div>)}
         </div>
       </div>
-      <div className="faint small" style={{ position: 'relative' }}>{SITE.openingHours}</div>
+      <div className="faint small" style={{ position: 'relative' }}>{t(SITE.openingHours)}</div>
     </div>
   );
 }
@@ -86,11 +87,11 @@ export default function Login() {
       <div className="auth-form">
         <ThemeToggle className="auth-theme" />
         <form className="box stack page" onSubmit={submit} noValidate>
-          <Link to="/" className="link small row" style={{ gap: 6, width: 'fit-content' }}><Icon name="arrowLeft" size={15} />Trang chủ</Link>
+          <Link to="/" className="link small row" style={{ gap: 6, width: 'fit-content' }}><Icon name="arrowLeft" size={15} />{t('Trang chủ')}</Link>
           <div>
-            <div className="kicker">Hội viên & nhân viên</div>
-            <h2>Đăng nhập</h2>
-            <p className="muted mt-8">Chào mừng trở lại! Đăng nhập để xem lịch tập và tiến độ của bạn.</p>
+            <div className="kicker">{t('Hội viên & nhân viên')}</div>
+            <h2>{t('Đăng nhập')}</h2>
+            <p className="muted mt-8">{t('Chào mừng trở lại! Đăng nhập để xem lịch tập và tiến độ của bạn.')}</p>
           </div>
           {state?.registered && !error && <Alert kind="success">Tạo tài khoản thành công. Nhập mật khẩu vừa đặt để đăng nhập.</Alert>}
           {error && <Alert kind="error">{error}</Alert>}
@@ -106,31 +107,31 @@ export default function Login() {
           </Field>
           <div className="row between">
             <span />
-            <Link to="/forgot-password" className="link small">Quên mật khẩu?</Link>
+            <Link to="/forgot-password" className="link small">{t('Quên mật khẩu?')}</Link>
           </div>
           <Button type="submit" variant="primary" size="lg" block loading={busy}>Đăng nhập</Button>
 
           {canRegister && (
-            <p className="center small muted">Chưa có tài khoản? <Link to="/register" className="link">Đăng ký hội viên</Link></p>
+            <p className="center small muted">{t('Chưa có tài khoản?')} <Link to="/register" className="link">{t('Đăng ký hội viên')}</Link></p>
           )}
 
           {demo.length > 0 && (
             <div className="demo-box">
               <div className="row between">
-                <span className="tiny"><Icon name="zap" size={13} /> Môi trường demo</span>
-                <span className="tiny faint">Dữ liệu mẫu, không phải tài khoản khách hàng</span>
+                <span className="tiny"><Icon name="zap" size={13} /> {t('Môi trường demo')}</span>
+                <span className="tiny faint">{t('Dữ liệu mẫu, không phải tài khoản khách hàng')}</span>
               </div>
               <div className="quick-login">
                 {demo.map((d) => (
                   <button key={d.email} type="button" disabled={busy}
                     onClick={() => { setEmail(d.email); setPassword(d.password); void submit(undefined, d); }}>
-                    <Icon name={ROLE_ICON[d.role]} />{d.label}
+                    <Icon name={ROLE_ICON[d.role]} />{t(d.label)}
                   </button>
                 ))}
               </div>
             </div>
           )}
-          {options.error && <p className="tiny faint center">Không tải được cấu hình đăng nhập nhanh: {options.error}</p>}
+          {options.error && <p className="tiny faint center">{t('Không tải được cấu hình đăng nhập nhanh:')} {options.error}</p>}
         </form>
       </div>
     </div>

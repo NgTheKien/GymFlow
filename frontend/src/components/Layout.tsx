@@ -8,6 +8,7 @@ import { Brand } from './Brand';
 import { Icon, type IconName } from './Icon';
 import { Avatar, Button } from './ui';
 import { ThemeToggle } from '../theme/ThemeToggle';
+import { locale, t } from '../i18n';
 
 interface NavItem { to: string; label: string; icon: IconName; roles: Role[]; group?: string; tab?: boolean }
 
@@ -21,6 +22,8 @@ export const NAV: NavItem[] = [
   { to: '/members', label: 'Hội viên', icon: 'users', roles: ['ADMIN', 'TRAINER'], group: 'Huấn luyện', tab: true },
   { to: '/workout-plans', label: 'Giáo án', icon: 'clipboard', roles: ['ADMIN', 'TRAINER'], group: 'Huấn luyện', tab: true },
   { to: '/exercises', label: 'Thư viện bài tập', icon: 'dumbbell', roles: ['ADMIN', 'TRAINER', 'MEMBER'], group: 'Huấn luyện' },
+  { to: '/articles', label: 'Kho kiến thức', icon: 'layers', roles: ['ADMIN', 'TRAINER'], group: 'Huấn luyện' },
+  { to: '/knowledge', label: 'Kho kiến thức', icon: 'layers', roles: ['MEMBER'], group: 'Huấn luyện' },
   { to: '/trainers', label: 'Huấn luyện viên', icon: 'badge', roles: ['ADMIN'], group: 'Kinh doanh' },
   { to: '/plans', label: 'Gói tập', icon: 'ticket', roles: ['ADMIN'], group: 'Kinh doanh' },
   { to: '/subscriptions', label: 'Đăng ký gói', icon: 'card', roles: ['ADMIN'], group: 'Kinh doanh' },
@@ -35,8 +38,8 @@ function Clock() {
   useEffect(() => { const t = setInterval(() => setNow(new Date()), 30_000); return () => clearInterval(t); }, []);
   return (
     <div className="clock">
-      <div className="num">{now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</div>
-      <div className="tiny muted">{now.toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit' })}</div>
+      <div className="num">{now.toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' })}</div>
+      <div className="tiny muted">{now.toLocaleDateString(locale(), { weekday: 'long', day: '2-digit', month: '2-digit' })}</div>
     </div>
   );
 }
@@ -75,22 +78,22 @@ function Notifications() {
 
   return (
     <div className="bell" ref={ref}>
-      <Button variant="ghost" icon="bell" aria-label={`Thông báo (${unread} mới)`} onClick={toggle} />
+      <Button variant="ghost" icon="bell" aria-label={t('Thông báo ({n} mới)', { n: unread })} onClick={toggle} />
       {unread > 0 && <span className="dot">{unread}</span>}
       {open && (
         <div className="popover" role="menu">
           <div className="row between" style={{ padding: '6px 10px 10px' }}>
-            <b>Thông báo</b><span className="tiny faint">{items.length} mục</span>
+            <b>{t('Thông báo')}</b><span className="tiny faint">{t('{n} mục', { n: items.length })}</span>
           </div>
-          {items.length === 0 && <div className="empty" style={{ padding: 24 }}><Icon name="checkCircle" /><p className="small">Không có việc gì cần chú ý</p></div>}
+          {items.length === 0 && <div className="empty" style={{ padding: 24 }}><Icon name="checkCircle" /><p className="small">{t('Không có việc gì cần chú ý')}</p></div>}
           {items.map((n) => (
             <div key={n.id} className={`notif ${n.level}`} role="menuitem" tabIndex={0}
               onClick={() => { setOpen(false); if (n.link) navigate(n.link); }}
               onKeyDown={(e) => { if (e.key === 'Enter' && n.link) { setOpen(false); navigate(n.link); } }}>
               <div className="ic"><Icon name={icon(n.level)} /></div>
               <div className="grow">
-                <div className="small" style={{ fontWeight: 700 }}>{n.title}</div>
-                <div className="tiny muted">{n.message}</div>
+                <div className="small" style={{ fontWeight: 700 }}>{t(n.title)}</div>
+                <div className="tiny muted">{t(n.message)}</div>
                 <div className="tiny faint mt-4">{relativeTime(n.at)}</div>
               </div>
             </div>
@@ -116,7 +119,7 @@ export function Layout() {
 
   return (
     <div className="shell">
-      <aside className={`sidebar ${open ? 'open' : ''}`} aria-label="Điều hướng chính">
+      <aside className={`sidebar ${open ? 'open' : ''}`} aria-label={t('Điều hướng chính')}>
         <Link to="/dashboard"><Brand /></Link>
         <nav className="nav">
           {items.map((n) => {
@@ -124,9 +127,9 @@ export function Layout() {
             lastGroup = n.group ?? lastGroup;
             return (
               <Fragment key={n.to}>
-                {showGroup && <div className="nav-group">{n.group}</div>}
+                {showGroup && <div className="nav-group">{t(n.group!)}</div>}
                 <NavLink to={n.to} className={({ isActive }) => (isActive ? 'active' : '')}>
-                  <Icon name={n.icon} /><span>{n.label}</span>
+                  <Icon name={n.icon} /><span>{t(n.label)}</span>
                 </NavLink>
               </Fragment>
             );
@@ -146,7 +149,7 @@ export function Layout() {
       <div className="main">
         <header className="topbar">
           <Button className="menu-btn" variant="ghost" icon="menu" aria-label="Mở menu" onClick={() => setOpen(true)} />
-          <div className="crumb">GymFlow / <b>{current?.label ?? 'Chi tiết'}</b></div>
+          <div className="crumb">GymFlow / <b>{t(current?.label ?? 'Chi tiết')}</b></div>
           <div className="spacer" />
           <Clock />
           <ThemeToggle className="top-theme" />
@@ -157,13 +160,13 @@ export function Layout() {
         </main>
       </div>
 
-      <nav className="tabbar" aria-label="Điều hướng nhanh">
+      <nav className="tabbar" aria-label={t('Điều hướng nhanh')}>
         {tabs.map((n) => (
           <NavLink key={n.to} to={n.to} className={({ isActive }) => (isActive ? 'active' : '')}>
-            <Icon name={n.icon} /><span>{n.label.replace(' của tôi', '')}</span>
+            <Icon name={n.icon} /><span>{t(n.label.replace(' của tôi', ''))}</span>
           </NavLink>
         ))}
-        <a href="#menu" onClick={(e) => { e.preventDefault(); setOpen(true); }}><Icon name="more" /><span>Thêm</span></a>
+        <a href="#menu" onClick={(e) => { e.preventDefault(); setOpen(true); }}><Icon name="more" /><span>{t('Thêm')}</span></a>
       </nav>
     </div>
   );

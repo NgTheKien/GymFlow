@@ -8,6 +8,7 @@ import { Alert, Button, Field, Input, PasswordInput } from '../components/ui';
 import { errMsg, fieldErrs } from '../lib/hooks';
 import { AuthArt } from './Login';
 import { ThemeToggle } from '../theme/ThemeToggle';
+import { t } from '../i18n';
 
 const PW_RULE = /^(?=.*[A-Za-z])(?=.*\d).{8,72}$/;
 
@@ -61,10 +62,10 @@ export default function ForgotPassword() {
       <div className="auth-form">
         <ThemeToggle className="auth-theme" />
         <div className="box stack page">
-          <Link to="/login" className="link small row" style={{ gap: 6 }}><Icon name="arrowLeft" size={15} />Quay lại đăng nhập</Link>
+          <Link to="/login" className="link small row" style={{ gap: 6 }}><Icon name="arrowLeft" size={15} />{t('Quay lại đăng nhập')}</Link>
           <div>
-            <h2>{step === 1 ? 'Quên mật khẩu' : 'Đặt mật khẩu mới'}</h2>
-            <p className="muted mt-8">{step === 1 ? 'Nhập email tài khoản, hệ thống sẽ gửi mã khôi phục.' : `Mã có hiệu lực trong ${minutes} phút và chỉ dùng được một lần.`}</p>
+            <h2>{t(step === 1 ? 'Quên mật khẩu' : 'Đặt mật khẩu mới')}</h2>
+            <p className="muted mt-8">{step === 1 ? t('Nhập email tài khoản, hệ thống sẽ gửi mã khôi phục.') : t('Mã có hiệu lực trong {n} phút và chỉ dùng được một lần.', { n: minutes })}</p>
           </div>
           {error && <Alert kind="error">{error}</Alert>}
           {step === 1 ? (
@@ -76,7 +77,7 @@ export default function ForgotPassword() {
             </form>
           ) : (
             <form className="stack" onSubmit={reset} noValidate>
-              {demoToken && <Alert kind="info">Chế độ demo (chưa gửi email thật): mã của bạn là <b className="num" style={{ letterSpacing: 2 }}>{demoToken}</b></Alert>}
+              {demoToken && <Alert kind="info">{t('Chế độ demo (chưa gửi email thật): mã của bạn là')} <b className="num" style={{ letterSpacing: 2 }}>{demoToken}</b></Alert>}
               <Field label="Mã khôi phục" error={errors.token} required>
                 <Input value={token} invalid={!!errors.token} onChange={(e) => setToken(e.target.value.toUpperCase())} placeholder="VD: K7M2QX9A" style={{ letterSpacing: 2 }} />
               </Field>

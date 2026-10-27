@@ -20,6 +20,7 @@
         document.documentElement.style.colorScheme = t;
         var m = document.querySelector("meta[name=theme-color]");
         if (m) m.setAttribute("content", light ? "#f5f6f8" : "#141415");
+        try { if (localStorage.getItem("gf.lang") === "en") document.documentElement.lang = "en"; } catch (e) {}
       })();
     </script>
     <title>GymFlow – Tập có kế hoạch. Tiến bộ đo được.</title>

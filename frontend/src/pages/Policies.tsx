@@ -1,11 +1,27 @@
 import { Link } from 'react-router-dom';
 import { Brand } from '../components/Brand';
 import { Icon } from '../components/Icon';
+import { getLang, t } from '../i18n';
 import { SITE } from '../site';
 import { ThemeToggle } from '../theme/ThemeToggle';
 
 /** Nội dung điều khoản & chính sách – dùng chung cho trang /policies và hộp thoại trong form đăng ký. */
 export function TermsContent() {
+  if (getLang() === 'en') {
+    return (
+      <div className="legal" lang="en">
+        <p>By creating a {SITE.name} member account, you agree to the following terms:</p>
+        <ol>
+          <li>Your registration details (full name, email, phone number) must be accurate and belong to you.</li>
+          <li>One account per person; do not share your password or let anyone else use your account.</li>
+          <li>The online account is for viewing schedules, workout plans, packages and progress. Packages are activated after payment at the front desk.</li>
+          <li>Sessions are scheduled by trainers; overdue sessions that were not completed are recorded as missed.</li>
+          <li>{SITE.name} may temporarily lock an account that is misused or breaks the gym rules.</li>
+        </ol>
+        <p className="tiny muted">This is an English rendering for convenience. The Vietnamese version is the governing text.</p>
+      </div>
+    );
+  }
   return (
     <div className="legal">
       <p>Khi tạo tài khoản hội viên {SITE.name}, bạn đồng ý với các điều khoản sau:</p>
@@ -21,6 +37,20 @@ export function TermsContent() {
 }
 
 export function PrivacyContent() {
+  if (getLang() === 'en') {
+    return (
+      <div className="legal" lang="en">
+        <ol>
+          <li><b>Data collected:</b> full name, email, phone number and training measurements recorded by you or your trainer (weight, body fat %, sessions).</li>
+          <li><b>Purpose:</b> managing packages, scheduling, tracking progress and sending training-related notifications.</li>
+          <li><b>Access:</b> only you, your assigned trainer and the gym management can see your data.</li>
+          <li><b>Security:</b> passwords are one-way hashed (BCrypt); nobody – including administrators – can see the original password.</li>
+          <li><b>Your rights:</b> view and update your details on the Profile page; ask us to stop using your data via {SITE.supportEmail}.</li>
+        </ol>
+        <p className="tiny muted">This is an English rendering for convenience. The Vietnamese version is the governing text.</p>
+      </div>
+    );
+  }
   return (
     <div className="legal">
       <ol>
@@ -41,17 +71,17 @@ export default function Policies() {
         <Link to="/"><Brand /></Link>
         <div style={{ flex: 1 }} />
         <ThemeToggle />
-        <Link className="btn btn-ghost btn-sm" to="/"><Icon name="arrowLeft" />Trang chủ</Link>
+        <Link className="btn btn-ghost btn-sm" to="/"><Icon name="arrowLeft" />{t('Trang chủ')}</Link>
       </nav>
       <main className="section page legal-page">
-        <div className="kicker">Pháp lý</div>
-        <h1 className="display-sm">Điều khoản &amp; Chính sách</h1>
+        <div className="kicker">{t('Pháp lý')}</div>
+        <h1 className="display-sm">{t('Điều khoản & Chính sách')}</h1>
         <section id="terms" className="mt-24">
-          <h2>Điều khoản sử dụng</h2>
+          <h2>{t('Điều khoản sử dụng')}</h2>
           <TermsContent />
         </section>
         <section id="privacy" className="mt-24">
-          <h2>Chính sách bảo mật</h2>
+          <h2>{t('Chính sách bảo mật')}</h2>
           <PrivacyContent />
         </section>
       </main>

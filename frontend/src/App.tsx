@@ -12,6 +12,7 @@ import Subscriptions from './pages/admin/Subscriptions';
 import Trainers from './pages/admin/Trainers';
 import Users from './pages/admin/Users';
 import ForgotPassword from './pages/ForgotPassword';
+import { KnowledgeArticle, KnowledgeList } from './pages/Knowledge';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import MemberDashboard from './pages/member/MemberDashboard';
@@ -21,6 +22,7 @@ import MyProgress from './pages/member/MyProgress';
 import Policies from './pages/Policies';
 import Register from './pages/Register';
 import { Forbidden, NotFound } from './pages/Errors';
+import Articles from './pages/shared/Articles';
 import Exercises from './pages/shared/Exercises';
 import MemberDetail from './pages/shared/MemberDetail';
 import Members from './pages/shared/Members';
@@ -75,6 +77,8 @@ export default function App() {
       <Route path="/register" element={loading ? <Splash /> : user ? <Navigate to="/dashboard" replace /> : <Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/policies" element={<Policies />} />
+      <Route path="/knowledge" element={<KnowledgeList />} />
+      <Route path="/knowledge/:slug" element={<KnowledgeArticle />} />
       <Route element={<RequireAuth><Layout /></RequireAuth>}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/me/schedule" element={<Only roles={MEMBER}><Schedules /></Only>} />
@@ -88,6 +92,7 @@ export default function App() {
         <Route path="/workout-plans/new" element={<Only roles={STAFF}><PlanEditor /></Only>} />
         <Route path="/workout-plans/:id" element={<Only roles={STAFF}><PlanEditor /></Only>} />
         <Route path="/exercises" element={<Exercises />} />
+        <Route path="/articles" element={<Only roles={STAFF}><Articles /></Only>} />
         <Route path="/trainers" element={<Only roles={ADMIN}><Trainers /></Only>} />
         <Route path="/plans" element={<Only roles={ADMIN}><Plans /></Only>} />
         <Route path="/subscriptions" element={<Only roles={ADMIN}><Subscriptions /></Only>} />

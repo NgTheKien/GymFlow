@@ -223,15 +223,77 @@ public final class Dtos {
             @NotNull(message = "Vui lòng chọn cấp độ") Level level,
             @Size(max = 1000) String description,
             @Size(max = 2000) String instructions,
-            @Pattern(regexp = "^$|^https?://.+", message = "Link video phải bắt đầu bằng http(s)://") @Size(max = 255) String videoUrl) {
+            @Pattern(regexp = "^$|^https?://.+", message = "Link video phải bắt đầu bằng http(s)://") @Size(max = 255) String videoUrl,
+            @Size(max = 120) String nameEn,
+            @Size(max = 255) String aliases,
+            @Size(max = 255) String secondaryMuscles,
+            ExerciseLocation location,
+            List<ExerciseGoal> goals,
+            @Size(max = 500) String breathing,
+            @Size(max = 2000) String commonMistakes,
+            @Size(max = 2000) String safetyNotes,
+            @Size(max = 2000) String variations,
+            @Size(max = 255) String suggestedDose,
+            ContentOrigin contentOrigin,
+            /** null = giữ nguyên nguồn đang gắn; danh sách rỗng = bỏ hết nguồn */
+            List<Long> sourceIds) {
     }
 
     public record HiddenRequest(@NotNull Boolean hidden) {
     }
 
+    /** Chỉ ADMIN. NEEDS_REVIEW bắt buộc kèm ghi chú để người biên soạn biết cần sửa gì. */
+    public record ReviewRequest(
+            @NotNull(message = "Vui lòng chọn trạng thái duyệt") ReviewStatus status,
+            @Size(max = 500, message = "Ghi chú tối đa 500 ký tự") String note) {
+    }
+
+    public record SourceResponse(Long id, String code, String publisher, String title, String url, String license,
+                                 String licenseUrl, boolean licenseVerified, String attribution,
+                                 LocalDate publisherReviewed, LocalDate accessedAt) {
+    }
+
     public record ExerciseResponse(Long id, String name, MuscleGroup muscleGroup, String equipment, Level level,
                                    String description, String instructions, String videoUrl, boolean hidden,
-                                   long usageCount, String createdByName) {
+                                   long usageCount, String createdByName,
+                                   String nameEn, String aliases, String secondaryMuscles, ExerciseLocation location,
+                                   List<ExerciseGoal> goals, String breathing, String commonMistakes, String safetyNotes,
+                                   String variations, String suggestedDose, ContentOrigin contentOrigin,
+                                   ReviewStatus reviewStatus, String reviewNote, String reviewedByName,
+                                   LocalDateTime reviewedAt, LocalDateTime updatedAt, List<SourceResponse> sources) {
+    }
+
+    // ===================== Knowledge base =====================
+    public record ArticleRequest(
+            @NotBlank(message = "Vui lòng nhập tiêu đề") @Size(max = 200, message = "Tiêu đề tối đa 200 ký tự") String title,
+            @NotBlank(message = "Vui lòng nhập đường dẫn")
+            @Pattern(regexp = "^[a-z0-9]+(-[a-z0-9]+)*$", message = "Đường dẫn chỉ gồm chữ thường không dấu, số và dấu gạch ngang")
+            @Size(max = 120) String slug,
+            @NotNull(message = "Vui lòng chọn chủ đề") ArticleCategory category,
+            @NotBlank(message = "Vui lòng nhập tóm tắt") @Size(max = 500, message = "Tóm tắt tối đa 500 ký tự") String summary,
+            @NotBlank(message = "Vui lòng nhập nội dung") @Size(max = 20000, message = "Nội dung tối đa 20.000 ký tự") String body,
+            ContentOrigin contentOrigin,
+            List<Long> sourceIds) {
+    }
+
+    /** SUBMIT (gửi duyệt) · APPROVE (xuất bản) · REJECT (trả về bản nháp) · ARCHIVE (gỡ) · RESTORE (khôi phục về nháp) */
+    public enum ArticleAction { SUBMIT, APPROVE, REJECT, ARCHIVE, RESTORE }
+
+    public record ArticleActionRequest(
+            @NotNull(message = "Vui lòng chọn thao tác") ArticleAction action,
+            @Size(max = 500, message = "Ghi chú tối đa 500 ký tự") String note) {
+    }
+
+    /** Bản rút gọn cho danh sách công khai (không kèm thân bài). */
+    public record ArticleSummary(Long id, String slug, String title, ArticleCategory category, String summary,
+                                 LocalDateTime publishedAt) {
+    }
+
+    public record ArticleResponse(Long id, String slug, String title, ArticleCategory category, String summary,
+                                  String body, ContentOrigin contentOrigin, ArticleStatus status, String reviewNote,
+                                  String authorName, Long authorId, String reviewedByName, LocalDateTime reviewedAt,
+                                  LocalDateTime publishedAt, LocalDateTime createdAt, LocalDateTime updatedAt,
+                                  List<SourceResponse> sources) {
     }
 
     // ===================== Workout plan =====================

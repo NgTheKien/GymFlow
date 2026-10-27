@@ -70,10 +70,34 @@ export interface Subscription {
 export interface SubscriptionPreview { startDate: string; endDate: string; price: number; chained: boolean }
 
 // ---------- Exercises & plans ----------
+export type ReviewStatus = 'DRAFT' | 'PENDING' | 'APPROVED' | 'NEEDS_REVIEW';
+export type ContentOrigin = 'SELF_AUTHORED' | 'ADAPTED';
+export type ExerciseLocation = 'GYM' | 'HOME' | 'ANY';
+export type ExerciseGoal = 'STRENGTH' | 'ENDURANCE' | 'MOBILITY' | 'BALANCE' | 'FAT_LOSS';
+export interface Source {
+  id: number; code: string; publisher: string; title: string; url: string; license: string | null; licenseUrl: string | null;
+  licenseVerified: boolean; attribution: string | null; publisherReviewed: string | null; accessedAt: string;
+}
 export interface Exercise {
   id: number; name: string; muscleGroup: MuscleGroup; equipment: string | null; level: Level;
   description: string | null; instructions: string | null; videoUrl: string | null; hidden: boolean;
   usageCount: number; createdByName: string | null;
+  nameEn: string | null; aliases: string | null; secondaryMuscles: string | null; location: ExerciseLocation | null;
+  goals: ExerciseGoal[]; breathing: string | null; commonMistakes: string | null; safetyNotes: string | null;
+  variations: string | null; suggestedDose: string | null; contentOrigin: ContentOrigin;
+  reviewStatus: ReviewStatus; reviewNote: string | null; reviewedByName: string | null; reviewedAt: string | null;
+  updatedAt: string | null; sources: Source[];
+}
+
+// ---------- Knowledge base ----------
+export type ArticleCategory = 'NUTRITION' | 'HYDRATION' | 'SLEEP' | 'ACTIVITY' | 'RECOVERY';
+export type ArticleStatus = 'DRAFT' | 'PENDING' | 'PUBLISHED' | 'ARCHIVED';
+export type ArticleAction = 'SUBMIT' | 'APPROVE' | 'REJECT' | 'ARCHIVE' | 'RESTORE';
+export interface ArticleSummary { id: number; slug: string; title: string; category: ArticleCategory; summary: string; publishedAt: string | null }
+export interface Article {
+  id: number; slug: string; title: string; category: ArticleCategory; summary: string; body: string; contentOrigin: ContentOrigin;
+  status: ArticleStatus; reviewNote: string | null; authorName: string | null; authorId: number | null; reviewedByName: string | null;
+  reviewedAt: string | null; publishedAt: string | null; createdAt: string | null; updatedAt: string | null; sources: Source[];
 }
 export interface PlanItem {
   id?: number; exerciseId: number; exerciseName?: string; muscleGroup?: MuscleGroup; equipment?: string | null;

@@ -115,6 +115,12 @@ public class DataSeeder implements ApplicationRunner {
                 {"Burpee", MuscleGroup.FULL_BODY, "Không", Level.INTERMEDIATE},
                 {"Kettlebell Swing", MuscleGroup.FULL_BODY, "Kettlebell", Level.INTERMEDIATE}};
         for (Object[] r : exData) {
+            // Flyway V3 đã tạo thư viện bài tập có nguồn → dùng lại, không tạo bản trùng tên
+            var existing = exerciseRepository.findFirstByNameIgnoreCase((String) r[0]);
+            if (existing.isPresent()) {
+                ex.add(existing.get());
+                continue;
+            }
             Exercise e = new Exercise();
             e.setName((String) r[0]);
             e.setMuscleGroup((MuscleGroup) r[1]);
