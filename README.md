@@ -57,7 +57,7 @@ gymflow/
 │   │   ├── service/       Nghiệp vụ, AccessService (phạm vi dữ liệu), Mappers (DTO + trường dẫn xuất)
 │   │   ├── web/           REST controller (@PreAuthorize theo vai trò)
 │   │   ├── dto/Dtos.java  Toàn bộ request/response + validation (đối chiếu 1-1 với frontend/src/api/types.ts)
-│   │   ├── security/      JwtService, JwtAuthFilter, AuthUser
+│   │   ├── security/      JwtService, JwtAuthFilter, AuthRateLimitFilter, AuthUser
 │   │   ├── config/        SecurityConfig, OpenApiConfig, ClockConfig, DataSeeder
 │   │   └── common/        ApiException, GlobalExceptionHandler, PageResponse, Secrets
 │   └── resources/db/migration/V1__init_schema.sql
@@ -85,8 +85,8 @@ gymflow/
 ### Quy tắc nghiệp vụ
 
 - Trạng thái gói (Sắp bắt đầu / Còn hiệu lực / Sắp hết hạn ≤ 7 ngày / Hết hạn / Đã huỷ) **tính theo ngày**, không lưu cứng.
-- Gia hạn để trống ngày bắt đầu → nối tiếp ngay sau gói hiện tại; hai gói không bao giờ chồng nhau (**chặn ở CSDL** bằng `EXCLUDE`).
-- Chỉ xếp lịch khi hội viên có gói hiệu lực vào ngày đó; HLV/hội viên không trùng giờ (**chặn ở CSDL**); buổi 15–240 phút, trong cùng một ngày.
+- Gia hạn để trống ngày bắt đầu → nối tiếp ngay sau gói hiện tại; hai gói không bao giờ chồng nhau (service khoá dòng hội viên rồi kiểm tra, an toàn cả khi hai người bấm cùng lúc).
+- Chỉ xếp lịch khi hội viên có gói hiệu lực vào ngày đó; HLV/hội viên không trùng giờ (khoá dòng hội viên → HLV rồi kiểm tra); buổi 15–240 phút, trong cùng một ngày.
 - Buổi quá ngày chưa hoàn thành tự chuyển “Vắng” lúc 00:05 hằng ngày và khi khởi động.
 - Mỗi ngày một bản ghi cân nặng (ghi lại thì cập nhật); 20–300 kg, mỡ 2–70 %.
 - Mỗi hội viên chỉ một giáo án “Đang áp dụng”; tạo giáo án mới tự lưu trữ giáo án cũ.
@@ -105,7 +105,7 @@ gymflow/
 
 ## 5. API
 
-Toàn bộ API có trên Swagger: http://localhost:8080/swagger-ui.html. Mọi endpoint (trừ đăng nhập, quên/đặt lại mật khẩu, `GET /api/plans/public`) cần `Authorization: Bearer <token>`.
+Toàn bộ API có trên Swagger: http://localhost:8080/swagger-ui.html. Mọi endpoint (trừ đăng nhập, đăng ký, quên/đặt lại mật khẩu, `GET /api/auth/options`, `GET /api/plans/public`) cần `Authorization: Bearer <token>`.
 
 | Method | Endpoint | Vai trò | Mô tả |
 | --- | --- | --- | --- |
