@@ -6,6 +6,7 @@ import { Badge, Button, Card, Empty, ErrorState, Input, LoadingBlock, PageHead, 
 import { downloadCsv } from '../../lib/csv';
 import { actionLabel, fmtDateTime } from '../../lib/format';
 import { useAsync, useDebounced } from '../../lib/hooks';
+import { t } from '../../i18n';
 
 export default function AuditLog() {
   const [params] = useSearchParams();
@@ -23,13 +24,13 @@ export default function AuditLog() {
     <div className="page">
       <PageHead eyebrow="Hệ thống" title="Nhật ký hệ thống" desc="Ai làm gì, lúc nào, từ đâu. Nhật ký được ghi trong giao dịch riêng nên vẫn còn kể cả khi thao tác thất bại."
         actions={<Button icon="download" disabled={!data?.content.length} onClick={() => data && downloadCsv('nhat-ky', data.content, [
-          { header: 'Thời gian', value: (a) => a.createdAt }, { header: 'Người thực hiện', value: (a) => a.actorEmail }, { header: 'Hành động', value: (a) => actionLabel[a.action] ?? a.action },
-          { header: 'Đối tượng', value: (a) => `${a.targetType ?? ''} ${a.targetId ?? ''}`.trim() }, { header: 'Chi tiết', value: (a) => a.detail }, { header: 'Kết quả', value: (a) => (a.success ? 'Thành công' : 'Thất bại') }, { header: 'IP', value: (a) => a.ip },
+          { header: t('Thời gian'), value: (a) => a.createdAt }, { header: t('Người thực hiện'), value: (a) => a.actorEmail }, { header: t('Hành động'), value: (a) => actionLabel[a.action] ?? a.action },
+          { header: t('Đối tượng'), value: (a) => `${a.targetType ?? ''} ${a.targetId ?? ''}`.trim() }, { header: t('Chi tiết'), value: (a) => a.detail }, { header: t('Kết quả'), value: (a) => t(a.success ? 'Thành công' : 'Thất bại') }, { header: 'IP', value: (a) => a.ip },
         ])}>Xuất trang này</Button>} />
       <div className="toolbar">
         <SearchInput value={q} onChange={setQ} placeholder="Tìm email, nội dung…" />
         <Select value={action} onChange={(e) => setAction(e.target.value)} aria-label="Hành động">
-          <option value="">Mọi hành động</option>
+          <option value="">{t('Mọi hành động')}</option>
           {actions.data?.map((a) => <option key={a} value={a}>{actionLabel[a] ?? a}</option>)}
         </Select>
         <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} style={{ width: 160 }} aria-label="Từ ngày" />
@@ -41,12 +42,12 @@ export default function AuditLog() {
             <>
               <div className="table-wrap">
                 <table className="table">
-                  <thead><tr><th>Thời gian</th><th>Người thực hiện</th><th>Hành động</th><th>Chi tiết</th><th>Kết quả</th><th>IP</th></tr></thead>
+                  <thead><tr><th>{t('Thời gian')}</th><th>{t('Người thực hiện')}</th><th>{t('Hành động')}</th><th>{t('Chi tiết')}</th><th>{t('Kết quả')}</th><th>IP</th></tr></thead>
                   <tbody>
                     {data.content.map((a) => (
                       <tr key={a.id}>
                         <td className="tiny nowrap muted">{fmtDateTime(a.createdAt)}</td>
-                        <td className="small">{a.actorEmail ?? <span className="faint">hệ thống</span>}</td>
+                        <td className="small">{a.actorEmail ?? <span className="faint">{t('hệ thống')}</span>}</td>
                         <td><b className="small">{actionLabel[a.action] ?? a.action}</b>{a.targetType && <div className="tiny faint">{a.targetType} #{a.targetId}</div>}</td>
                         <td className="small muted" style={{ maxWidth: 360 }}>{a.detail ?? ''}</td>
                         <td>{a.success ? <Badge tone="green">OK</Badge> : <Badge tone="red">Thất bại</Badge>}</td>

@@ -6,6 +6,7 @@ import { useToast } from '../../components/Toast';
 import { Alert, Badge, Button, Card, Confirm, Empty, ErrorState, Field, Input, LoadingBlock, Modal, PageHead, Pager, PasswordInput, Person, SearchInput, Select, StatusBadge } from '../../components/ui';
 import { fmtDateTime, relativeTime, roleLabel, userStatus } from '../../lib/format';
 import { errMsg, fieldErrs, useAsync, useDebounced } from '../../lib/hooks';
+import { t } from '../../i18n';
 
 const roleTone = { ADMIN: 'violet', TRAINER: 'blue', MEMBER: 'green' } as const;
 
@@ -31,10 +32,10 @@ export default function Users() {
       <div className="toolbar">
         <SearchInput value={q} onChange={setQ} placeholder="Tìm tên hoặc email…" />
         <Select value={role} onChange={(e) => setRole(e.target.value as Role | '')} aria-label="Vai trò">
-          <option value="">Mọi vai trò</option>{(Object.keys(roleLabel) as Role[]).map((r) => <option key={r} value={r}>{roleLabel[r]}</option>)}
+          <option value="">{t('Mọi vai trò')}</option>{(Object.keys(roleLabel) as Role[]).map((r) => <option key={r} value={r}>{roleLabel[r]}</option>)}
         </Select>
         <Select value={status} onChange={(e) => setStatus(e.target.value as UserStatus | '')} aria-label="Trạng thái">
-          <option value="">Mọi trạng thái</option><option value="ACTIVE">Đang mở</option><option value="LOCKED">Đã khoá</option>
+          <option value="">{t('Mọi trạng thái')}</option><option value="ACTIVE">{t('Đang mở')}</option><option value="LOCKED">{t('Đã khoá')}</option>
         </Select>
       </div>
       <Card flush>
@@ -43,14 +44,14 @@ export default function Users() {
             <>
               <div className="table-wrap">
                 <table className="table">
-                  <thead><tr><th>Tài khoản</th><th>Vai trò</th><th>Trạng thái</th><th>Đăng nhập gần nhất</th><th>Tạo lúc</th><th /></tr></thead>
+                  <thead><tr><th>{t('Tài khoản')}</th><th>{t('Vai trò')}</th><th>{t('Trạng thái')}</th><th>{t('Đăng nhập gần nhất')}</th><th>{t('Tạo lúc')}</th><th /></tr></thead>
                   <tbody>
                     {data.content.map((u) => (
                       <tr key={u.id}>
                         <td><Person name={u.fullName} sub={u.email} size="sm" /></td>
                         <td><Badge tone={roleTone[u.role]}>{roleLabel[u.role]}</Badge></td>
                         <td><StatusBadge map={userStatus} value={u.status} /></td>
-                        <td className="small muted">{u.lastLoginAt ? relativeTime(u.lastLoginAt) : 'Chưa đăng nhập'}</td>
+                        <td className="small muted">{u.lastLoginAt ? relativeTime(u.lastLoginAt) : t('Chưa đăng nhập')}</td>
                         <td className="tiny faint nowrap">{fmtDateTime(u.createdAt)}</td>
                         <td className="actions">
                           <Button size="sm" variant="ghost" icon="key" aria-label="Cấp mật khẩu tạm" title="Cấp mật khẩu tạm" onClick={() => setResetting(u)} />
@@ -68,13 +69,13 @@ export default function Users() {
 
       {locking && <Confirm danger={locking.status !== 'LOCKED'} title={locking.status === 'LOCKED' ? 'Mở khoá tài khoản?' : 'Khoá tài khoản?'}
         confirmText={locking.status === 'LOCKED' ? 'Mở khoá' : 'Khoá'} onClose={() => setLocking(null)}
-        message={locking.status === 'LOCKED' ? `${locking.email} sẽ đăng nhập lại được.` : `${locking.email} sẽ bị đăng xuất khỏi mọi phiên và không đăng nhập được.`}
+        message={locking.status === 'LOCKED' ? t('{email} sẽ đăng nhập lại được.', { email: locking.email }) : t('{email} sẽ bị đăng xuất khỏi mọi phiên và không đăng nhập được.', { email: locking.email })}
         onConfirm={async () => {
           try { await api.put(`/users/${locking.id}/status`, { status: locking.status === 'LOCKED' ? 'ACTIVE' : 'LOCKED' }); toast.success('Đã cập nhật'); void reload(); }
           catch (e) { toast.error(errMsg(e)); throw e; }
         }} />}
       {resetting && <Confirm title="Cấp mật khẩu tạm?" confirmText="Cấp mật khẩu" onClose={() => setResetting(null)}
-        message={`Mật khẩu hiện tại của ${resetting.email} sẽ bị thay bằng mật khẩu tạm.`}
+        message={t('Mật khẩu hiện tại của {email} sẽ bị thay bằng mật khẩu tạm.', { email: resetting.email })}
         onConfirm={async () => {
           try { const r = await api.post<{ temporaryPassword: string }>(`/users/${resetting.id}/reset-password`); setTemp({ user: resetting, password: r.temporaryPassword }); }
           catch (e) { toast.error(errMsg(e)); throw e; }
@@ -87,7 +88,7 @@ export default function Users() {
           <div className="stack">
             <Person name={temp.user.fullName} sub={temp.user.email} />
             <div className="num" style={{ fontSize: 30, letterSpacing: 2, textAlign: 'center', padding: 16, background: 'var(--rail)', borderRadius: 12 }}>{temp.password}</div>
-            <p className="small muted">Mật khẩu chỉ hiển thị một lần. Gửi trực tiếp cho người dùng và nhắc đổi ngay.</p>
+            <p className="small muted">{t('Mật khẩu chỉ hiển thị một lần. Gửi trực tiếp cho người dùng và nhắc đổi ngay.')}</p>
           </div>
         </Modal>
       )}

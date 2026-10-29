@@ -6,6 +6,7 @@ import { useToast } from '../../components/Toast';
 import { Alert, Badge, Button, Card, Confirm, Empty, ErrorState, Field, Input, LoadingBlock, Modal, PageHead, Textarea } from '../../components/ui';
 import { durationLabel, fmtMoney } from '../../lib/format';
 import { errMsg, fieldErrs, useAsync } from '../../lib/hooks';
+import { t } from '../../i18n';
 
 export default function Plans() {
   const toast = useToast();
@@ -27,17 +28,17 @@ export default function Plans() {
           {data.map((p) => (
             <Card key={p.id} className={`price-card hoverable`}>
               <div className="row between">
-                <span className="muted small">{durationLabel(p.durationDays)} · {p.durationDays} ngày</span>
+                <span className="muted small">{durationLabel(p.durationDays)} · {t('{n} ngày', { n: p.durationDays })}</span>
                 {p.active ? <Badge tone="green">Đang bán</Badge> : <Badge tone="muted">Ngừng bán</Badge>}
               </div>
               <h3 style={{ fontSize: 19 }}>{p.name}</h3>
               <div className="price">{fmtMoney(p.price)}</div>
-              <div className="tiny faint">≈ {fmtMoney(Math.round(p.price / p.durationDays))}/ngày</div>
+              <div className="tiny faint">{t('≈ {v}/ngày', { v: fmtMoney(Math.round(p.price / p.durationDays)) })}</div>
               {p.description && <p className="small muted">{p.description}</p>}
               {p.benefits && <div className="stack-sm small">{p.benefits.split(/[,\n]/).map((b) => b.trim()).filter(Boolean).map((b) => <div key={b} className="row" style={{ gap: 8 }}><Icon name="check" size={14} className="ok" />{b}</div>)}</div>}
               <div className="divider" />
               <div className="row between">
-                <span className="small"><b className="num">{p.currentSubscriptions}</b> <span className="muted">đang dùng</span></span>
+                <span className="small"><b className="num">{p.currentSubscriptions}</b> <span className="muted">{t('đang dùng')}</span></span>
                 <div className="row" style={{ gap: 2 }}>
                   <Button size="sm" variant="ghost" icon="edit" aria-label="Sửa" onClick={() => setEditing(p)} />
                   <Button size="sm" variant="ghost" icon={p.active ? 'ban' : 'play'} aria-label={p.active ? 'Ngừng bán' : 'Mở bán'} title={p.active ? 'Ngừng bán' : 'Mở bán'} onClick={() => void toggle(p)} />
@@ -50,7 +51,7 @@ export default function Plans() {
       )}
       {editing && <PlanForm plan={editing === 'new' ? undefined : editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); void reload(); }} />}
       {removing && <Confirm danger title="Xoá gói tập?" confirmText="Xoá" onClose={() => setRemoving(null)}
-        message={`Chỉ xoá được gói chưa từng bán. Nếu "${removing.name}" đã có người đăng ký, hãy chọn Ngừng bán.`}
+        message={t('Chỉ xoá được gói chưa từng bán. Nếu "{name}" đã có người đăng ký, hãy chọn Ngừng bán.', { name: removing.name })}
         onConfirm={async () => { try { await api.del(`/plans/${removing.id}`); toast.success('Đã xoá gói'); void reload(); } catch (e) { toast.error(errMsg(e)); throw e; } }} />}
     </div>
   );
@@ -85,7 +86,7 @@ function PlanForm({ plan, onClose, onSaved }: { plan?: MembershipPlan; onClose: 
     </>}>
       <div className="stack">
         {error && <Alert kind="error">{error}</Alert>}
-        {plan && plan.currentSubscriptions > 0 && <Alert kind="info">{plan.currentSubscriptions} hội viên đang dùng gói này. Giá mới chỉ áp dụng cho lần đăng ký sau.</Alert>}
+        {plan && plan.currentSubscriptions > 0 && <Alert kind="info">{t('{n} hội viên đang dùng gói này. Giá mới chỉ áp dụng cho lần đăng ký sau.', { n: plan.currentSubscriptions })}</Alert>}
         <div className="form-grid">
           <Field label="Tên gói" error={errors.name} required className="span-2"><Input maxLength={100} value={f.name} onChange={(e) => set('name', e.target.value)} /></Field>
           <Field label="Giá (₫)" error={errors.price} required hint={f.price ? fmtMoney(Number(f.price)) : undefined}><Input type="number" min={0} step={10000} value={f.price} onChange={(e) => set('price', e.target.value)} /></Field>

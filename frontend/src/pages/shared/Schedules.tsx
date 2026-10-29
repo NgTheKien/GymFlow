@@ -9,6 +9,7 @@ import { WeekCalendar } from '../../components/WeekCalendar';
 import { Alert, Badge, Button, Confirm, ErrorState, Field, Input, Modal, PageHead, Person, Segmented, Select, Stars, StatusBadge, Textarea } from '../../components/ui';
 import { addDays, fmtDateTime, fmtTime, fmtWeekday, parseDateTime, scheduleStatus, startOfWeek, toIsoDate, toIsoDateTime } from '../../lib/format';
 import { errMsg, fieldErrs, useAsync } from '../../lib/hooks';
+import { t } from '../../i18n';
 
 type Filter = 'ALL' | ScheduleStatus;
 
@@ -53,15 +54,15 @@ export default function Schedules() {
         <div className="spacer" />
         {me.role === 'ADMIN' && (
           <Select value={trainerId} onChange={(e) => setTrainerId(e.target.value)} aria-label="Lọc theo HLV">
-            <option value="">Tất cả HLV</option>
-            {trainers.data?.map((t) => <option key={t.id} value={t.id}>{t.fullName}</option>)}
+            <option value="">{t('Tất cả HLV')}</option>
+            {trainers.data?.map((tr) => <option key={tr.id} value={tr.id}>{tr.fullName}</option>)}
           </Select>
         )}
         <Segmented<Filter> value={filter} onChange={setFilter} options={[
-          { value: 'ALL', label: `Tất cả ${data?.length ?? ''}` },
-          { value: 'SCHEDULED', label: `Sắp tới ${counts.SCHEDULED}` },
-          { value: 'COMPLETED', label: `Hoàn thành ${counts.COMPLETED}` },
-          { value: 'MISSED', label: `Vắng ${counts.MISSED}` },
+          { value: 'ALL', label: `${t('Tất cả')} ${data?.length ?? ''}` },
+          { value: 'SCHEDULED', label: `${t('Sắp tới')} ${counts.SCHEDULED}` },
+          { value: 'COMPLETED', label: `${t('Hoàn thành')} ${counts.COMPLETED}` },
+          { value: 'MISSED', label: `${t('Vắng')} ${counts.MISSED}` },
         ]} />
       </div>
 
@@ -117,20 +118,20 @@ export function SessionModal({ session, onClose, onChanged }: { session: Schedul
             <StatusBadge map={scheduleStatus} value={session.status} />
           </div>
           <dl className="kv">
-            <dt>Hội viên</dt><dd><Person name={session.memberName} size="sm" /></dd>
-            <dt>Huấn luyện viên</dt><dd>{session.trainerName ?? <span className="faint">Tự tập</span>}</dd>
-            <dt>Giáo án</dt><dd>{session.planName ?? <span className="faint">Không gắn</span>}</dd>
-            {session.note && <><dt>Ghi chú</dt><dd>{session.note}</dd></>}
+            <dt>{t('Hội viên')}</dt><dd><Person name={session.memberName} size="sm" /></dd>
+            <dt>{t('Huấn luyện viên')}</dt><dd>{session.trainerName ?? <span className="faint">{t('Tự tập')}</span>}</dd>
+            <dt>{t('Giáo án')}</dt><dd>{session.planName ?? <span className="faint">{t('Không gắn')}</span>}</dd>
+            {session.note && <><dt>{t('Ghi chú')}</dt><dd>{session.note}</dd></>}
           </dl>
           {!started && session.status === 'SCHEDULED' && <Alert kind="info">Chỉ đánh dấu hoàn thành được khi đã đến giờ tập.</Alert>}
           {session.status === 'MISSED' && canComplete && <Alert kind="warning">Buổi này đang bị đánh vắng. Nếu bạn đã tập, có thể ghi nhận bù trong vòng 7 ngày.</Alert>}
           {session.log && (
             <div className="card" style={{ background: 'var(--rail)' }}>
-              <div className="row between"><b className="ok">Đã hoàn thành</b><span className="tiny faint">{fmtDateTime(session.log.completedAt)}</span></div>
+              <div className="row between"><b className="ok">{t('Đã hoàn thành')}</b><span className="tiny faint">{fmtDateTime(session.log.completedAt)}</span></div>
               <div className="grid grid-3 mt-8 small">
-                <div><div className="faint tiny">Thời lượng</div><b>{session.log.durationMinutes ?? '—'} phút</b></div>
-                <div><div className="faint tiny">Calo</div><b>{session.log.calories ?? '—'} kcal</b></div>
-                <div><div className="faint tiny">Cảm nhận</div><Stars value={session.log.rating} /></div>
+                <div><div className="faint tiny">{t('Thời lượng')}</div><b>{t('{n} phút', { n: session.log.durationMinutes ?? '—' })}</b></div>
+                <div><div className="faint tiny">{t('Calo')}</div><b>{session.log.calories ?? '—'} kcal</b></div>
+                <div><div className="faint tiny">{t('Cảm nhận')}</div><Stars value={session.log.rating} /></div>
               </div>
               {session.log.note && <p className="small muted mt-8">“{session.log.note}”</p>}
             </div>
@@ -184,11 +185,11 @@ function CompleteForm({ session, onClose, onDone }: { session: Schedule; onClose
         <Field label="Cảm nhận buổi tập">
           <div className="row" style={{ gap: 4 }}>
             {[1, 2, 3, 4, 5].map((n) => (
-              <button key={n} type="button" className="btn btn-ghost btn-icon" aria-label={`${n} sao`} onClick={() => setRating(n)} style={{ color: n <= rating ? 'var(--warning)' : 'var(--faint)' }}>
+              <button key={n} type="button" className="btn btn-ghost btn-icon" aria-label={t('{n}/5 sao', { n })} onClick={() => setRating(n)} style={{ color: n <= rating ? 'var(--warning)' : 'var(--faint)' }}>
                 <Icon name="star" fill={n <= rating ? 'currentColor' : 'none'} />
               </button>
             ))}
-            <span className="small muted">{['', 'Rất mệt', 'Hơi đuối', 'Ổn', 'Tốt', 'Xuất sắc'][rating]}</span>
+            <span className="small muted">{t(['', 'Rất mệt', 'Hơi đuối', 'Ổn', 'Tốt', 'Xuất sắc'][rating])}</span>
           </div>
         </Field>
         <Field label="Ghi chú" error={errors.note}><Textarea maxLength={255} value={note} onChange={(e) => setNote(e.target.value)} placeholder="VD: tăng 2.5kg bench press" /></Field>
@@ -254,7 +255,7 @@ export function ScheduleForm({ edit, presetMemberId, onClose, onSaved }: { edit?
         onSaved(start);
       } else {
         const res = await api.post<ScheduleCreated>('/schedules', { ...body, memberId: Number(memberId), repeatWeeks: Number(repeat) });
-        toast.success(`Đã xếp ${res.created.length} buổi tập`);
+        toast.success(t('Đã xếp {n} buổi tập', { n: res.created.length }));
         if (res.skipped.length) { setSkipped(res.skipped); setBusy(false); return; }
         onSaved(start);
       }
@@ -284,9 +285,9 @@ export function ScheduleForm({ edit, presetMemberId, onClose, onSaved }: { edit?
           ) : (
             <Field label="Hội viên" error={errors.memberId} required className="span-2">
               <Select value={memberId} invalid={!!errors.memberId} onChange={(e) => setMemberId(e.target.value)}>
-                <option value="">— Chọn hội viên —</option>
+                <option value="">{t('— Chọn hội viên —')}</option>
                 {members.data?.content.map((m) => (
-                  <option key={m.id} value={m.id}>{m.fullName} · {m.code}{m.subscriptionState === 'EXPIRED' || !m.subscriptionState ? ' (không có gói)' : ''}</option>
+                  <option key={m.id} value={m.id}>{m.fullName} · {m.code}{m.subscriptionState === 'EXPIRED' || !m.subscriptionState ? t(' (không có gói)') : ''}</option>
                 ))}
               </Select>
             </Field>
@@ -297,15 +298,15 @@ export function ScheduleForm({ edit, presetMemberId, onClose, onSaved }: { edit?
           {me.role === 'ADMIN' && (
             <Field label="Huấn luyện viên" hint="Để trống = HLV phụ trách của hội viên">
               <Select value={trainerId} onChange={(e) => setTrainerId(e.target.value)}>
-                <option value="">Mặc định</option>
-                {trainers.data?.filter((t) => t.active).map((t) => <option key={t.id} value={t.id}>{t.fullName}</option>)}
+                <option value="">{t('Mặc định')}</option>
+                {trainers.data?.filter((tr) => tr.active).map((tr) => <option key={tr.id} value={tr.id}>{tr.fullName}</option>)}
               </Select>
             </Field>
           )}
           <Field label="Giáo án" className={me.role === 'ADMIN' ? '' : 'span-2'}>
             <Select value={planId} onChange={(e) => setPlanId(e.target.value)}>
-              <option value="">Không gắn giáo án</option>
-              {(plans.data ?? []).map((p) => <option key={p.id} value={p.id}>{p.name}{p.status !== 'ACTIVE' ? ' (lưu trữ)' : ''}</option>)}
+              <option value="">{t('Không gắn giáo án')}</option>
+              {(plans.data ?? []).map((p) => <option key={p.id} value={p.id}>{p.name}{p.status !== 'ACTIVE' ? t(' (lưu trữ)') : ''}</option>)}
             </Select>
           </Field>
           <Field label="Tiêu đề" error={errors.title} required className="span-2"><Input maxLength={120} value={title} onChange={(e) => setTitle(e.target.value)} /></Field>
@@ -313,21 +314,21 @@ export function ScheduleForm({ edit, presetMemberId, onClose, onSaved }: { edit?
           <Field label="Giờ bắt đầu" required><Input type="time" step={900} value={time} onChange={(e) => setTime(e.target.value)} /></Field>
           <Field label="Thời lượng (phút)" error={errors.duration} required>
             <Select value={duration} onChange={(e) => setDuration(e.target.value)}>
-              {[30, 45, 60, 75, 90, 120].map((m) => <option key={m} value={m}>{m} phút</option>)}
-              {![30, 45, 60, 75, 90, 120].includes(Number(duration)) && <option value={duration}>{duration} phút</option>}
+              {[30, 45, 60, 75, 90, 120].map((m) => <option key={m} value={m}>{t('{n} phút', { n: m })}</option>)}
+              {![30, 45, 60, 75, 90, 120].includes(Number(duration)) && <option value={duration}>{t('{n} phút', { n: duration })}</option>}
             </Select>
           </Field>
           {!edit && (
             <Field label="Lặp lại hằng tuần" hint="Tuần nào trùng giờ / hết gói sẽ được bỏ qua">
               <Select value={repeat} onChange={(e) => setRepeat(e.target.value)}>
-                <option value="0">Không lặp</option>
-                {[1, 2, 3, 4, 6, 8, 12].map((n) => <option key={n} value={n}>Thêm {n} tuần ({n + 1} buổi)</option>)}
+                <option value="0">{t('Không lặp')}</option>
+                {[1, 2, 3, 4, 6, 8, 12].map((n) => <option key={n} value={n}>{t('Thêm {n} tuần ({m} buổi)', { n, m: n + 1 })}</option>)}
               </Select>
             </Field>
           )}
           <Field label="Ghi chú" className="span-2"><Textarea maxLength={255} value={note} onChange={(e) => setNote(e.target.value)} placeholder="VD: tập trung kỹ thuật squat" /></Field>
         </div>
-        {!edit && Number(repeat) > 0 && <Badge tone="blue">Sẽ tạo tối đa {Number(repeat) + 1} buổi vào {fmtWeekday(`${date}T${time}:00`).split(',')[0]} hằng tuần</Badge>}
+        {!edit && Number(repeat) > 0 && <Badge tone="blue">{t('Sẽ tạo tối đa {n} buổi vào {day} hằng tuần', { n: Number(repeat) + 1, day: fmtWeekday(`${date}T${time}:00`).split(',')[0] })}</Badge>}
       </div>
     </Modal>
   );

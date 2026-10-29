@@ -12,6 +12,7 @@ import { age, fmtDate, fmtMoney, genderLabel, memberStatus, planStatus, subState
 import { errMsg, useAsync } from '../../lib/hooks';
 import { ScheduleForm } from './Schedules';
 import { MemberFormModal } from './Members';
+import { t, tn } from '../../i18n';
 
 type Tab = 'overview' | 'progress' | 'plans';
 
@@ -27,14 +28,14 @@ export default function MemberDetail() {
   const [cancelling, setCancelling] = useState<Subscription | null>(null);
   const { data, error, loading, reload } = useAsync(() => api.get<Detail>(`/members/${memberId}`), [memberId]);
 
-  if (error) return <div className="page"><ErrorState message={error} onRetry={reload} /><Link to="/members" className="link small mt-16" style={{ display: 'inline-block' }}>← Danh sách hội viên</Link></div>;
+  if (error) return <div className="page"><ErrorState message={error} onRetry={reload} /><Link to="/members" className="link small mt-16" style={{ display: 'inline-block' }}>← {t('Danh sách hội viên')}</Link></div>;
   if (loading || !data) return <div className="page"><LoadingBlock rows={8} /></div>;
   const m = data.member;
   const rate = data.totalSessions ? Math.round((data.completedSessions / data.totalSessions) * 100) : null;
 
   return (
     <div className="page">
-      <Link to="/members" className="link small row" style={{ gap: 6, marginBottom: 14 }}><Icon name="arrowLeft" size={15} />Danh sách hội viên</Link>
+      <Link to="/members" className="link small row" style={{ gap: 6, marginBottom: 14 }}><Icon name="arrowLeft" size={15} />{t('Danh sách hội viên')}</Link>
       <div className="hero" style={{ marginBottom: 22 }}>
         <div className="row between row-wrap" style={{ position: 'relative', gap: 18 }}>
           <div className="row" style={{ gap: 16 }}>
@@ -60,7 +61,7 @@ export default function MemberDetail() {
       </div>
 
       <Segmented<Tab> value={tab} onChange={setTab} options={[
-        { value: 'overview', label: 'Tổng quan' }, { value: 'progress', label: 'Tiến độ' }, { value: 'plans', label: `Giáo án (${data.plans.length})` },
+        { value: 'overview', label: 'Tổng quan' }, { value: 'progress', label: 'Tiến độ' }, { value: 'plans', label: t('Giáo án ({n})', { n: data.plans.length }) },
       ]} />
 
       <div className="mt-16">
@@ -68,7 +69,7 @@ export default function MemberDetail() {
           <div className="stack" style={{ gap: 18 }}>
             <div className="grid grid-4">
               <Stat icon="ticket" label="Gói hiện tại" value={m.daysLeft ?? '—'} unit={m.daysLeft != null ? 'ngày' : undefined} foot={m.currentPlanName ?? 'Chưa có gói'} />
-              <Stat icon="checkCircle" label="Buổi hoàn thành" value={data.completedSessions} accent="#3d97ff" foot={`/${data.totalSessions} buổi đã xếp`} />
+              <Stat icon="checkCircle" label="Buổi hoàn thành" value={data.completedSessions} accent="#3d97ff" foot={t('/{n} buổi đã xếp', { n: data.totalSessions })} />
               <Stat icon="target" label="Tỉ lệ hoàn thành" value={rate ?? '—'} unit={rate != null ? '%' : undefined} accent="#8b7cff" foot="Không tính buổi đã huỷ" />
               <Stat icon="scale" label="Cân nặng gần nhất" value={data.latestWeight?.weightKg ?? '—'} unit={data.latestWeight ? 'kg' : undefined} accent="#ffb020" foot={data.latestWeight ? fmtDate(data.latestWeight.recordedDate) : '—'} />
             </div>
@@ -77,14 +78,14 @@ export default function MemberDetail() {
                 {data.subscriptions.length === 0 ? <Empty icon="ticket" title="Chưa đăng ký gói nào" action={admin && <Button variant="primary" size="sm" onClick={() => setModal('subscribe')}>Đăng ký ngay</Button>} /> : (
                   <div className="table-wrap">
                     <table className="table">
-                      <thead><tr><th>Gói</th><th>Thời gian</th><th>Số tiền</th><th>Trạng thái</th>{admin && <th />}</tr></thead>
+                      <thead><tr><th>{t('Gói')}</th><th>{t('Thời gian')}</th><th>{t('Số tiền')}</th><th>{t('Trạng thái')}</th>{admin && <th />}</tr></thead>
                       <tbody>
                         {data.subscriptions.map((s) => (
                           <tr key={s.id}>
                             <td><b>{s.planName}</b>{s.note && <div className="tiny faint ellipsis" style={{ maxWidth: 220 }}>{s.note}</div>}</td>
                             <td className="nowrap small">{fmtDate(s.startDate)} → {fmtDate(s.endDate)}</td>
                             <td className="num">{fmtMoney(s.pricePaid)}</td>
-                            <td><StatusBadge map={subState} value={s.state} />{(s.state === 'ACTIVE' || s.state === 'EXPIRING') && <div className="tiny faint mt-4">còn {s.daysLeft} ngày</div>}</td>
+                            <td><StatusBadge map={subState} value={s.state} />{(s.state === 'ACTIVE' || s.state === 'EXPIRING') && <div className="tiny faint mt-4">{t('còn {n} ngày', { n: s.daysLeft })}</div>}</td>
                             {admin && <td className="actions">{!s.cancelled && s.state !== 'EXPIRED' && <Button size="sm" variant="ghost" icon="ban" aria-label="Huỷ gói" title="Huỷ gói" onClick={() => setCancelling(s)} />}</td>}
                           </tr>
                         ))}
@@ -96,15 +97,15 @@ export default function MemberDetail() {
               <Card title="Thông tin" icon="user">
                 <dl className="kv small">
                   <dt>Email</dt><dd className="ellipsis">{m.email}</dd>
-                  <dt>Điện thoại</dt><dd>{m.phone ?? '—'}</dd>
-                  <dt>Giới tính</dt><dd>{m.gender ? genderLabel[m.gender] : '—'}</dd>
-                  <dt>Ngày sinh</dt><dd>{fmtDate(m.dateOfBirth)}{age(m.dateOfBirth) != null && <span className="faint"> · {age(m.dateOfBirth)} tuổi</span>}</dd>
-                  <dt>Chiều cao</dt><dd>{m.heightCm ? `${m.heightCm} cm` : '—'}</dd>
-                  <dt>Mục tiêu</dt><dd>{m.goal ?? '—'}</dd>
-                  <dt>HLV</dt><dd>{m.trainerName ?? <span className="faint">Chưa phân công</span>}</dd>
-                  <dt>Địa chỉ</dt><dd>{m.address ?? '—'}</dd>
-                  <dt>Tham gia</dt><dd>{fmtDate(m.joinedAt)}</dd>
-                  {m.note && <><dt>Ghi chú</dt><dd className="warn">{m.note}</dd></>}
+                  <dt>{t('Điện thoại')}</dt><dd>{m.phone ?? '—'}</dd>
+                  <dt>{t('Giới tính')}</dt><dd>{m.gender ? genderLabel[m.gender] : '—'}</dd>
+                  <dt>{t('Ngày sinh')}</dt><dd>{fmtDate(m.dateOfBirth)}{age(m.dateOfBirth) != null && <span className="faint"> · {t('{n} tuổi', { n: age(m.dateOfBirth) })}</span>}</dd>
+                  <dt>{t('Chiều cao')}</dt><dd>{m.heightCm ? `${m.heightCm} cm` : '—'}</dd>
+                  <dt>{t('Mục tiêu')}</dt><dd>{m.goal ?? '—'}</dd>
+                  <dt>{t('HLV')}</dt><dd>{m.trainerName ?? <span className="faint">{t('Chưa phân công')}</span>}</dd>
+                  <dt>{t('Địa chỉ')}</dt><dd>{m.address ?? '—'}</dd>
+                  <dt>{t('Tham gia')}</dt><dd>{fmtDate(m.joinedAt)}</dd>
+                  {m.note && <><dt>{t('Ghi chú')}</dt><dd className="warn">{m.note}</dd></>}
                 </dl>
               </Card>
             </div>
@@ -116,14 +117,14 @@ export default function MemberDetail() {
             {data.plans.length === 0 ? <Empty icon="clipboard" title="Chưa có giáo án" action={<Button variant="primary" size="sm" onClick={() => navigate(`/workout-plans/new?memberId=${m.id}`)}>Soạn giáo án</Button>} /> : (
               <div className="table-wrap">
                 <table className="table">
-                  <thead><tr><th>Giáo án</th><th>HLV</th><th>Thời gian</th><th>Nội dung</th><th>Trạng thái</th></tr></thead>
+                  <thead><tr><th>{t('Giáo án')}</th><th>{t('HLV')}</th><th>{t('Thời gian')}</th><th>{t('Nội dung')}</th><th>{t('Trạng thái')}</th></tr></thead>
                   <tbody>
                     {data.plans.map((p) => (
                       <tr key={p.id} className="clickable" onClick={() => navigate(`/workout-plans/${p.id}`)}>
                         <td><b>{p.name}</b><div className="tiny faint">{p.goal}</div></td>
                         <td>{p.trainerName ?? '—'}</td>
                         <td className="small nowrap">{fmtDate(p.startDate)} → {fmtDate(p.endDate)}</td>
-                        <td className="small">{p.trainingDays} ngày/tuần · {p.itemCount} bài</td>
+                        <td className="small">{t('{d} ngày/tuần · {n} bài', { d: p.trainingDays, n: p.itemCount })}</td>
                         <td><StatusBadge map={planStatus} value={p.status} /></td>
                       </tr>
                     ))}
@@ -172,9 +173,9 @@ export function CancelSubscription({ sub, onClose, onDone }: { sub: Subscription
   const [open, setOpen] = useState(true);
   if (!open) return null;
   return (
-    <Confirm danger title={`Huỷ gói ${sub.planName}?`} confirmText="Huỷ gói" onClose={() => { setOpen(false); onClose(); }}
+    <Confirm danger title={t('Huỷ gói {name}?', { name: sub.planName })} confirmText="Huỷ gói" onClose={() => { setOpen(false); onClose(); }}
       message={<div className="stack">
-        <span>Gói của <b>{sub.memberName}</b> ({fmtDate(sub.startDate)} → {fmtDate(sub.endDate)}) sẽ hết hiệu lực ngay. Thao tác được ghi vào nhật ký.</span>
+        <span>{tn('Gói của {name} ({from} → {to}) sẽ hết hiệu lực ngay. Thao tác được ghi vào nhật ký.', { name: <b>{sub.memberName}</b>, from: fmtDate(sub.startDate), to: fmtDate(sub.endDate) })}</span>
         <Textarea maxLength={200} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Lý do huỷ (không bắt buộc)" />
       </div>}
       onConfirm={async () => {

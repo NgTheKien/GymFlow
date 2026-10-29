@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { t } from '../i18n';
 import type { PlanItem } from '../api/types';
 import { DAYS, DAY_NAMES, muscleColor, muscleLabel } from '../lib/format';
 import { Icon } from './Icon';
@@ -19,14 +20,14 @@ export function PlanView({ items }: { items: PlanItem[] }) {
           const n = items.filter((i) => i.dayOfWeek === d).length;
           return (
             <button key={d} className={`${d === day ? 'on' : ''} ${n ? 'has' : ''}`} onClick={() => setDay(d)}>
-              {DAYS[d - 1]}{d === todayDow && ' •'}<small>{n ? `${n} bài` : 'Nghỉ'}</small>
+              {DAYS[d - 1]}{d === todayDow && ' •'}<small>{n ? t('{n} bài', { n }) : t('Nghỉ')}</small>
             </button>
           );
         })}
       </div>
       <div className="row between">
-        <b>{DAY_NAMES[day - 1]}{day === todayDow && <span className="ok"> · Hôm nay</span>}</b>
-        {list.length > 0 && <span className="tiny faint">{list.length} bài · {totalSets} hiệp</span>}
+        <b>{DAY_NAMES[day - 1]}{day === todayDow && <span className="ok"> · {t('Hôm nay')}</span>}</b>
+        {list.length > 0 && <span className="tiny faint">{t('{n} bài · {m} hiệp', { n: list.length, m: totalSets })}</span>}
       </div>
       {list.length === 0 ? <Empty icon="heart" title="Ngày nghỉ" desc="Nghỉ ngơi cũng là một phần của tập luyện." /> : (
         <div className="stack-sm">
@@ -39,7 +40,7 @@ export function PlanView({ items }: { items: PlanItem[] }) {
                 <div className="tiny muted">{it.muscleGroup ? muscleLabel[it.muscleGroup] : ''}{it.equipment ? ` · ${it.equipment}` : ''}{it.note ? ` · ${it.note}` : ''}</div>
               </div>
               <div className="row row-wrap" style={{ gap: 6, justifyContent: 'flex-end' }}>
-                {it.durationMinutes ? <span className="chip on">{it.durationMinutes} phút</span> : <span className="chip on">{it.sets} × {it.reps}</span>}
+                {it.durationMinutes ? <span className="chip on">{t('{n} phút', { n: it.durationMinutes })}</span> : <span className="chip on">{it.sets} × {it.reps}</span>}
                 {it.weightKg != null && <span className="chip">{it.weightKg} kg</span>}
                 {it.restSeconds != null && <span className="chip"><Icon name="clock" size={12} />{it.restSeconds}s</span>}
               </div>

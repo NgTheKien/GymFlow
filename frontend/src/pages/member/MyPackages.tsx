@@ -2,6 +2,7 @@ import { api } from '../../api/client';
 import type { MembershipPlan, Subscription } from '../../api/types';
 import { Icon } from '../../components/Icon';
 import { Alert, Card, Empty, ErrorState, LoadingBlock, Meter, PageHead, StatusBadge } from '../../components/ui';
+import { t } from '../../i18n';
 import { durationLabel, fmtDate, fmtMoney, parseDate, subState } from '../../lib/format';
 import { useAsync } from '../../lib/hooks';
 
@@ -18,7 +19,7 @@ export default function MyPackages() {
   return (
     <div className="page">
       <PageHead eyebrow="Thành viên" title="Gói tập của tôi" desc="Trạng thái gói tính theo ngày hôm nay. Gia hạn tại quầy sẽ được nối tiếp ngay sau gói hiện tại." />
-      {current?.state === 'EXPIRING' && upcoming.length === 0 && <div style={{ marginBottom: 18 }}><Alert kind="warning">Gói của bạn còn {current.daysLeft} ngày. Gia hạn sớm để không bị gián đoạn lịch tập.</Alert></div>}
+      {current?.state === 'EXPIRING' && upcoming.length === 0 && <div style={{ marginBottom: 18 }}><Alert kind="warning">{t('Gói của bạn còn {n} ngày. Gia hạn sớm để không bị gián đoạn lịch tập.', { n: current.daysLeft })}</Alert></div>}
       {!current && upcoming.length === 0 && <div style={{ marginBottom: 18 }}><Alert kind="error">Bạn chưa có gói tập hiệu lực, chưa thể xếp lịch tập mới.</Alert></div>}
 
       <div className="grid grid-main" style={{ alignItems: 'start' }}>
@@ -26,13 +27,13 @@ export default function MyPackages() {
           {current && (
             <div className="hero">
               <div style={{ position: 'relative' }}>
-                <div className="row between"><span className="chip on"><Icon name="ticket" size={14} /> Gói hiện tại</span><StatusBadge map={subState} value={current.state} /></div>
+                <div className="row between"><span className="chip on"><Icon name="ticket" size={14} /> {t('Gói hiện tại')}</span><StatusBadge map={subState} value={current.state} /></div>
                 <h2 className="mt-16">{current.planName}</h2>
                 <div className="row" style={{ alignItems: 'baseline', gap: 8, marginTop: 6 }}>
-                  <span className="num" style={{ fontSize: 44 }}>{current.daysLeft}</span><span className="muted">ngày còn lại</span>
+                  <span className="num" style={{ fontSize: 44 }}>{current.daysLeft}</span><span className="muted">{t('ngày còn lại')}</span>
                 </div>
                 <div className="mt-16"><Meter value={total - current.daysLeft} max={total} color={current.state === 'EXPIRING' ? 'var(--warning)' : undefined} /></div>
-                <div className="row between small muted mt-8"><span>Bắt đầu {fmtDate(current.startDate)}</span><span>Hết hạn {fmtDate(current.endDate)}</span></div>
+                <div className="row between small muted mt-8"><span>{t('Bắt đầu {d}', { d: fmtDate(current.startDate) })}</span><span>{t('Hết hạn {d}', { d: fmtDate(current.endDate) })}</span></div>
               </div>
             </div>
           )}
@@ -40,7 +41,7 @@ export default function MyPackages() {
             {subs.data.length === 0 ? <Empty icon="ticket" title="Chưa có gói nào" /> : (
               <div className="table-wrap">
                 <table className="table">
-                  <thead><tr><th>Gói</th><th>Thời gian</th><th>Số tiền</th><th>Trạng thái</th></tr></thead>
+                  <thead><tr><th>{t('Gói')}</th><th>{t('Thời gian')}</th><th>{t('Số tiền')}</th><th>{t('Trạng thái')}</th></tr></thead>
                   <tbody>
                     {subs.data.map((s) => (
                       <tr key={s.id}>
@@ -64,7 +65,7 @@ export default function MyPackages() {
                 <span className="num small">{fmtMoney(p.price)}</span>
               </div>
             ))}
-            <p className="tiny faint mt-8">Liên hệ lễ tân để đăng ký hoặc gia hạn.</p>
+            <p className="tiny faint mt-8">{t('Liên hệ lễ tân để đăng ký hoặc gia hạn.')}</p>
           </div>
         </Card>
       </div>

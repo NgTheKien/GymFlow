@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { t } from '../i18n';
 import { api } from '../api/client';
 import type { Progress, Weight } from '../api/types';
 import { fmtDate, fmtDateShort, fmtNum, todayIso } from '../lib/format';
@@ -49,10 +50,10 @@ export function ProgressPanel({ memberId, canEdit = true }: { memberId: number; 
     <div className="stack" style={{ gap: 18 }}>
       <div className="grid grid-4">
         <Stat icon="scale" label="Cân nặng hiện tại" value={fmtNum(data.currentWeight, 1)} unit={data.currentWeight != null ? 'kg' : undefined}
-          foot={change == null ? 'Chưa có số liệu' : <span className={change <= 0 ? 'trend-up' : 'trend-down'}>{change > 0 ? '+' : ''}{fmtNum(change, 1)} kg từ lần đầu</span>} />
+          foot={change == null ? 'Chưa có số liệu' : <span className={change <= 0 ? 'trend-up' : 'trend-down'}>{t('{v} kg từ lần đầu', { v: (change > 0 ? '+' : '') + fmtNum(change, 1) })}</span>} />
         <Stat icon="heart" label="BMI" value={fmtNum(data.bmi, 1)} accent="#ffb020" foot={data.bmiCategory ?? (data.heightCm ? '—' : 'Cần cập nhật chiều cao')} />
-        <Stat icon="flame" label="Chuỗi tuần tập" value={data.streakWeeks} unit="tuần" accent="#ff6b61" foot={`${data.totalSessions} buổi · ${fmtNum(data.totalMinutes)} phút`} />
-        <Stat icon="zap" label="Calo đã đốt" value={fmtNum(data.totalCalories)} unit="kcal" accent="#8b7cff" foot={data.avgRating ? `Cảm nhận TB ${data.avgRating}/5` : 'Chưa có đánh giá'} />
+        <Stat icon="flame" label="Chuỗi tuần tập" value={data.streakWeeks} unit="tuần" accent="#ff6b61" foot={t('{n} buổi · {m} phút', { n: data.totalSessions, m: fmtNum(data.totalMinutes) })} />
+        <Stat icon="zap" label="Calo đã đốt" value={fmtNum(data.totalCalories)} unit="kcal" accent="#8b7cff" foot={data.avgRating ? t('Cảm nhận TB {n}/5', { n: data.avgRating }) : 'Chưa có đánh giá'} />
       </div>
 
       <div className="grid grid-main">
@@ -62,36 +63,36 @@ export function ProgressPanel({ memberId, canEdit = true }: { memberId: number; 
           )}
           {data.weights.some((w) => w.bodyFat != null) && (
             <div className="mt-16">
-              <div className="tiny faint" style={{ marginBottom: 6 }}>Tỉ lệ mỡ (%)</div>
+              <div className="tiny faint" style={{ marginBottom: 6 }}>{t('Tỉ lệ mỡ (%)')}</div>
               <LineChart height={140} color="#ffb020" points={data.weights.filter((w) => w.bodyFat != null).map((w) => ({ label: fmtDateShort(w.recordedDate), value: w.bodyFat as number }))} />
             </div>
           )}
         </Card>
         <Card title="Chỉ số cơ thể" icon="heart">
           <div className="row" style={{ justifyContent: 'center' }}>
-            <Ring value={data.attendanceRate ?? 0} label={data.attendanceRate == null ? '—' : `${Math.round(data.attendanceRate)}%`} sub="chuyên cần 8 tuần" size={140} />
+            <Ring value={data.attendanceRate ?? 0} label={data.attendanceRate == null ? '—' : `${Math.round(data.attendanceRate)}%`} sub={t('chuyên cần 8 tuần')} size={140} />
           </div>
           <div className="mt-16">
-            {data.bmi != null ? <BmiBar bmi={data.bmi} /> : <p className="muted small">Cần chiều cao và cân nặng để tính BMI.</p>}
-            <p className="tiny faint mt-8">Phân loại BMI theo ngưỡng WHO cho người châu Á (bình thường 18,5 – 22,9).</p>
+            {data.bmi != null ? <BmiBar bmi={data.bmi} /> : <p className="muted small">{t('Cần chiều cao và cân nặng để tính BMI.')}</p>}
+            <p className="tiny faint mt-8">{t('Phân loại BMI theo ngưỡng WHO cho người châu Á (bình thường 18,5 – 22,9).')}</p>
           </div>
           <dl className="kv mt-16 small">
-            <dt>Chiều cao</dt><dd>{data.heightCm ? `${data.heightCm} cm` : '—'}</dd>
-            <dt>Cân lần đầu</dt><dd>{data.startWeight ? `${data.startWeight} kg` : '—'}</dd>
-            <dt>% mỡ gần nhất</dt><dd>{data.bodyFat != null ? `${data.bodyFat}%` : '—'}</dd>
+            <dt>{t('Chiều cao')}</dt><dd>{data.heightCm ? `${data.heightCm} cm` : '—'}</dd>
+            <dt>{t('Cân lần đầu')}</dt><dd>{data.startWeight ? `${data.startWeight} kg` : '—'}</dd>
+            <dt>{t('% mỡ gần nhất')}</dt><dd>{data.bodyFat != null ? `${data.bodyFat}%` : '—'}</dd>
           </dl>
         </Card>
       </div>
 
       <Card title="Chuyên cần 8 tuần gần nhất" icon="calendar">
-        <StackedBars data={weeks} series={[{ name: 'Hoàn thành', color: '#00d95b' }, { name: 'Vắng', color: '#ff6b61' }, { name: 'Sắp tới', color: '#3d97ff' }]} />
+        <StackedBars data={weeks} series={[{ name: t('Hoàn thành'), color: '#00d95b' }, { name: t('Vắng'), color: '#ff6b61' }, { name: t('Sắp tới'), color: '#3d97ff' }]} />
       </Card>
 
       {data.weights.length > 0 && (
         <Card title="Nhật ký cân nặng" icon="scroll" flush>
           <div className="table-wrap">
             <table className="table">
-              <thead><tr><th>Ngày</th><th>Cân nặng</th><th>% mỡ</th><th>Ghi chú</th>{canEdit && <th />}</tr></thead>
+              <thead><tr><th>{t('Ngày')}</th><th>{t('Cân nặng')}</th><th>{t('% mỡ')}</th><th>{t('Ghi chú')}</th>{canEdit && <th />}</tr></thead>
               <tbody>
                 {[...data.weights].reverse().map((w) => (
                   <tr key={w.id}>
@@ -109,7 +110,7 @@ export function ProgressPanel({ memberId, canEdit = true }: { memberId: number; 
       )}
 
       {adding && <WeightForm memberId={memberId} last={data.weights[data.weights.length - 1]} onClose={() => setAdding(false)} onSaved={() => { setAdding(false); void reload(); }} />}
-      {removing && <Confirm danger title="Xoá bản ghi cân nặng?" message={`Bản ghi ngày ${fmtDate(removing.recordedDate)} (${removing.weightKg} kg) sẽ bị xoá.`} confirmText="Xoá"
+      {removing && <Confirm danger title="Xoá bản ghi cân nặng?" message={t('Bản ghi ngày {d} ({w} kg) sẽ bị xoá.', { d: fmtDate(removing.recordedDate), w: removing.weightKg })} confirmText="Xoá"
         onClose={() => setRemoving(null)} onConfirm={async () => {
           try { await api.del(`/weights/${removing.id}`); toast.success('Đã xoá'); void reload(); } catch (e) { toast.error(errMsg(e)); throw e; }
         }} />}
@@ -148,7 +149,7 @@ function WeightForm({ memberId, last, onClose, onSaved }: { memberId: number; la
       <Button variant="primary" icon="check" loading={busy} onClick={submit}>Lưu</Button>
     </>}>
       <div className="stack">
-        <p className="small muted"><Icon name="info" size={14} style={{ display: 'inline', verticalAlign: -2 }} /> Mỗi ngày một bản ghi, ghi lại cùng ngày sẽ cập nhật số cũ.</p>
+        <p className="small muted"><Icon name="info" size={14} style={{ display: 'inline', verticalAlign: -2 }} /> {t('Mỗi ngày một bản ghi, ghi lại cùng ngày sẽ cập nhật số cũ.')}</p>
         <Field label="Ngày" error={errors.recordedDate} required><Input type="date" max={todayIso()} value={date} onChange={(e) => setDate(e.target.value)} /></Field>
         <div className="form-grid">
           <Field label="Cân nặng (kg)" error={errors.weightKg} required><Input inputMode="decimal" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="VD: 62.5" /></Field>

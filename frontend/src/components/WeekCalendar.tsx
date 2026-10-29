@@ -1,4 +1,5 @@
 import type { Schedule } from '../api/types';
+import { t } from '../i18n';
 import { addDays, DAYS, fmtTime, isSameDay, parseDateTime, scheduleStatus } from '../lib/format';
 import { Badge } from './ui';
 
@@ -18,7 +19,7 @@ export function WeekCalendar({ weekStart, events, onSelect, showMember = true }:
 
   return (
     <>
-      <div className="week" role="grid" aria-label="Lịch tuần">
+      <div className="week" role="grid" aria-label={t('Lịch tuần')}>
         <div className="wh" />
         {days.map((d, i) => (
           <div key={i} className={`wh ${isSameDay(d, now) ? 'today' : ''}`}>
@@ -42,7 +43,7 @@ export function WeekCalendar({ weekStart, events, onSelect, showMember = true }:
                     role="button" tabIndex={0} onClick={() => onSelect(e)} onKeyDown={(ev) => { if (ev.key === 'Enter') onSelect(e); }}
                     title={`${e.title} · ${fmtTime(e.startTime)}–${fmtTime(e.endTime)}`}>
                     <b>{fmtTime(e.startTime)} {showMember ? e.memberName : e.title}</b>
-                    {h > 40 && <span>{showMember ? e.title : e.trainerName ?? 'Tự tập'}</span>}
+                    {h > 40 && <span>{showMember ? e.title : e.trainerName ?? t('Tự tập')}</span>}
                   </div>
                 );
               })}
@@ -59,7 +60,7 @@ export function WeekCalendar({ weekStart, events, onSelect, showMember = true }:
             <div key={i} className="card" style={{ padding: 14 }}>
               <div className="row between" style={{ marginBottom: 8 }}>
                 <b className={isSameDay(d, now) ? 'ok' : ''}>{DAYS[i]} · {d.getDate()}/{d.getMonth() + 1}</b>
-                <span className="tiny faint">{list.length} buổi</span>
+                <span className="tiny faint">{t('{n} buổi', { n: list.length })}</span>
               </div>
               <div className="stack-sm">
                 {list.map((e) => {
@@ -78,7 +79,7 @@ export function WeekCalendar({ weekStart, events, onSelect, showMember = true }:
             </div>
           );
         })}
-        {events.length === 0 && <div className="muted small">Tuần này chưa có buổi tập.</div>}
+        {events.length === 0 && <div className="muted small">{t('Tuần này chưa có buổi tập.')}</div>}
       </div>
     </>
   );

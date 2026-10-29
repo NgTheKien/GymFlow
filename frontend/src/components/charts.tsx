@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { t } from '../i18n';
 
 // Biểu đồ SVG tự vẽ: không cần thư viện, có animation và tooltip khi rê chuột.
 const W = 640;
@@ -16,7 +17,7 @@ export function LineChart({ points, height = 220, color = '#00d95b', format = (n
   points: { label: string; value: number }[]; height?: number; color?: string; format?: (n: number) => string; minZero?: boolean;
 }) {
   const [tip, setTip] = useState<Tip | null>(null);
-  if (points.length === 0) return <div className="muted small">Chưa có dữ liệu</div>;
+  if (points.length === 0) return <div className="muted small">{t('Chưa có dữ liệu')}</div>;
   const pad = { l: 44, r: 12, t: 14, b: 26 };
   const vals = points.map((p) => p.value);
   let lo = minZero ? 0 : Math.min(...vals);
@@ -65,7 +66,7 @@ export function BarChart({ data, height = 220, color = '#00b24b', highlightLast 
   data: { label: string; value: number }[]; height?: number; color?: string; highlightLast?: boolean; format?: (n: number) => string;
 }) {
   const [tip, setTip] = useState<Tip | null>(null);
-  if (data.length === 0) return <div className="muted small">Chưa có dữ liệu</div>;
+  if (data.length === 0) return <div className="muted small">{t('Chưa có dữ liệu')}</div>;
   const pad = { l: 44, r: 8, t: 14, b: 26 };
   const max = niceMax(Math.max(...data.map((d) => d.value)));
   const bw = (W - pad.l - pad.r) / data.length;

@@ -5,6 +5,7 @@ import { useAuth, useMe } from '../../auth/AuthContext';
 import { Icon } from '../../components/Icon';
 import { useToast } from '../../components/Toast';
 import { Alert, Avatar, Badge, Button, Card, Field, Input, LoadingBlock, PageHead, PasswordInput, Select, Textarea } from '../../components/ui';
+import { t } from '../../i18n';
 import { DAY_NAMES, fmtDateTime, genderLabel, roleLabel } from '../../lib/format';
 import { errMsg, fieldErrs, useAsync } from '../../lib/hooks';
 
@@ -23,10 +24,10 @@ export default function Profile() {
           <PasswordCard />
           <Card title="Phiên đăng nhập" icon="shield">
             <dl className="kv small">
-              <dt>Vai trò</dt><dd><Badge tone="green">{roleLabel[me.role]}</Badge></dd>
-              <dt>Lần đăng nhập</dt><dd>{fmtDateTime(me.lastLoginAt)}</dd>
+              <dt>{t('Vai trò')}</dt><dd><Badge tone="green">{roleLabel[me.role]}</Badge></dd>
+              <dt>{t('Lần đăng nhập')}</dt><dd>{fmtDateTime(me.lastLoginAt)}</dd>
             </dl>
-            <p className="tiny faint mt-16">Tài khoản bị khoá sẽ mất quyền truy cập ngay cả khi đang đăng nhập.</p>
+            <p className="tiny faint mt-16">{t('Tài khoản bị khoá sẽ mất quyền truy cập ngay cả khi đang đăng nhập.')}</p>
           </Card>
         </div>
       </div>
@@ -94,7 +95,7 @@ function PasswordCard() {
         {pw && (
           <div className="row" style={{ gap: 4 }}>
             {[1, 2, 3, 4, 5].map((i) => <i key={i} style={{ flex: 1, height: 4, borderRadius: 2, background: i <= strength ? (strength >= 4 ? 'var(--primary-bright)' : strength >= 3 ? 'var(--warning)' : 'var(--error)') : 'var(--surface)' }} />)}
-            <span className="tiny faint" style={{ marginLeft: 6 }}>{strength >= 4 ? 'Mạnh' : strength >= 3 ? 'Khá' : 'Yếu'}</span>
+            <span className="tiny faint" style={{ marginLeft: 6 }}>{t(strength >= 4 ? 'Mạnh' : strength >= 3 ? 'Khá' : 'Yếu')}</span>
           </div>
         )}
         <Field label="Nhập lại mật khẩu mới" error={errors.confirm}><PasswordInput value={pw2} onChange={(e) => setPw2(e.target.value)} autoComplete="new-password" /></Field>
@@ -123,7 +124,7 @@ function MemberSelfCard() {
     } catch (e) { toast.error(errMsg(e)); } finally { setBusy(false); }
   };
   return (
-    <Card title={`Hồ sơ tập luyện · ${data.code}`} icon="heart" actions={<Button size="sm" variant="primary" loading={busy} onClick={submit}>Lưu</Button>}>
+    <Card title={t('Hồ sơ tập luyện · {code}', { code: data.code })} icon="heart" actions={<Button size="sm" variant="primary" loading={busy} onClick={submit}>Lưu</Button>}>
       <div className="form-grid">
         <Field label="Ngày sinh"><Input type="date" value={f.dateOfBirth} onChange={(e) => setF({ ...f, dateOfBirth: e.target.value })} /></Field>
         <Field label="Giới tính">
@@ -134,7 +135,7 @@ function MemberSelfCard() {
         <Field label="Chiều cao (cm)" hint="Dùng để tính BMI"><Input type="number" min={80} max={250} value={f.heightCm} onChange={(e) => setF({ ...f, heightCm: e.target.value })} /></Field>
         <Field label="Mục tiêu"><Input maxLength={255} value={f.goal} onChange={(e) => setF({ ...f, goal: e.target.value })} /></Field>
         <Field label="Địa chỉ" className="span-2"><Input maxLength={255} value={f.address} onChange={(e) => setF({ ...f, address: e.target.value })} /></Field>
-        <Field label="Huấn luyện viên" className="span-2"><Input disabled value={data.trainerName ?? 'Chưa phân công'} /></Field>
+        <Field label="Huấn luyện viên" className="span-2"><Input disabled value={data.trainerName ?? t('Chưa phân công')} /></Field>
       </div>
     </Card>
   );
@@ -176,11 +177,11 @@ export function ShiftEditor({ trainer, onSaved }: { trainer: Trainer; onSaved: (
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => setShifts(trainer.shifts), [trainer]);
-  const hm = (t: string) => t.slice(0, 5);
+  const hm = (v: string) => v.slice(0, 5);
   const save = async () => {
     setError(null);
     const bad = shifts.find((s) => hm(s.endTime) <= hm(s.startTime));
-    if (bad) { setError(`${DAY_NAMES[bad.dayOfWeek - 1]}: giờ kết thúc phải sau giờ bắt đầu`); return; }
+    if (bad) { setError(t('{day}: giờ kết thúc phải sau giờ bắt đầu', { day: DAY_NAMES[bad.dayOfWeek - 1] })); return; }
     setBusy(true);
     try {
       await api.put(`/trainers/${trainer.id}/shifts`, { shifts: shifts.map((s) => ({ dayOfWeek: s.dayOfWeek, startTime: hm(s.startTime), endTime: hm(s.endTime) })) });
@@ -198,12 +199,12 @@ export function ShiftEditor({ trainer, onSaved }: { trainer: Trainer; onSaved: (
             <div key={d} className="row row-wrap" style={{ padding: '8px 0', borderBottom: '1px solid var(--hairline-soft)' }}>
               <b style={{ width: 80 }} className="small">{DAY_NAMES[d - 1]}</b>
               <div className="row row-wrap grow" style={{ gap: 8 }}>
-                {list.length === 0 && <span className="tiny faint">Nghỉ</span>}
+                {list.length === 0 && <span className="tiny faint">{t('Nghỉ')}</span>}
                 {list.map(({ s, i }) => (
                   <div key={i} className="row" style={{ gap: 4, background: 'var(--rail)', borderRadius: 10, padding: 4 }}>
-                    <input className="input" type="time" style={{ height: 30, width: 104 }} value={hm(s.startTime)} onChange={(e) => set(i, { startTime: e.target.value })} aria-label="Bắt đầu" />
+                    <input className="input" type="time" style={{ height: 30, width: 104 }} value={hm(s.startTime)} onChange={(e) => set(i, { startTime: e.target.value })} aria-label={t('Bắt đầu')} />
                     <span className="faint">–</span>
-                    <input className="input" type="time" style={{ height: 30, width: 104 }} value={hm(s.endTime)} onChange={(e) => set(i, { endTime: e.target.value })} aria-label="Kết thúc" />
+                    <input className="input" type="time" style={{ height: 30, width: 104 }} value={hm(s.endTime)} onChange={(e) => set(i, { endTime: e.target.value })} aria-label={t('Kết thúc')} />
                     <Button size="sm" variant="ghost" icon="x" aria-label="Bỏ ca" onClick={() => setShifts((xs) => xs.filter((_, k) => k !== i))} />
                   </div>
                 ))}
@@ -213,7 +214,7 @@ export function ShiftEditor({ trainer, onSaved }: { trainer: Trainer; onSaved: (
           );
         })}
       </div>
-      <p className="tiny faint mt-8"><Icon name="info" size={12} style={{ display: 'inline', verticalAlign: -2 }} /> Ca trong cùng một ngày không được chồng giờ nhau.</p>
+      <p className="tiny faint mt-8"><Icon name="info" size={12} style={{ display: 'inline', verticalAlign: -2 }} /> {t('Ca trong cùng một ngày không được chồng giờ nhau.')}</p>
     </Card>
   );
 }

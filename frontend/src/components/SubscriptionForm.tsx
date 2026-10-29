@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
 import type { Member, MembershipPlan, Page, Subscription, SubscriptionPreview } from '../api/types';
+import { t, tn } from '../i18n';
 import { durationLabel, fmtDate, fmtMoney } from '../lib/format';
 import { errMsg, useAsync } from '../lib/hooks';
 import { useToast } from './Toast';
@@ -39,7 +40,7 @@ export function SubscriptionForm({ memberId: preset, onClose, onSaved }: { membe
     setBusy(true); setError(null);
     try {
       const s = await api.post<Subscription>('/subscriptions', { memberId: Number(memberId), planId: Number(planId), startDate: startDate || null, pricePaid: p, note: note || null });
-      toast.success(`Đã đăng ký ${s.planName} cho ${s.memberName}`);
+      toast.success(t('Đã đăng ký {plan} cho {member}', { plan: s.planName, member: s.memberName }));
       onSaved(s);
     } catch (e) { setError(errMsg(e)); } finally { setBusy(false); }
   };
@@ -55,25 +56,25 @@ export function SubscriptionForm({ memberId: preset, onClose, onSaved }: { membe
           {!preset && (
             <Field label="Hội viên" required className="span-2">
               <Select value={memberId} onChange={(e) => setMemberId(e.target.value)}>
-                <option value="">— Chọn hội viên —</option>
+                <option value="">{t('— Chọn hội viên —')}</option>
                 {members.data?.content.map((m) => <option key={m.id} value={m.id}>{m.fullName} · {m.code}</option>)}
               </Select>
             </Field>
           )}
           <Field label="Gói tập" required className="span-2">
             <Select value={planId} onChange={(e) => { setPlanId(e.target.value); setPrice(''); }}>
-              <option value="">— Chọn gói —</option>
+              <option value="">{t('— Chọn gói —')}</option>
               {plans.data?.filter((p) => p.active).map((p) => <option key={p.id} value={p.id}>{p.name} · {durationLabel(p.durationDays)} · {fmtMoney(p.price)}</option>)}
             </Select>
           </Field>
           <Field label="Ngày bắt đầu" hint="Để trống để nối tiếp gói hiện tại"><Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></Field>
-          <Field label="Số tiền thu (₫)" hint={plan ? `Giá niêm yết ${fmtMoney(plan.price)}` : undefined}><Input type="number" min={0} step={1000} value={price} onChange={(e) => setPrice(e.target.value)} /></Field>
+          <Field label="Số tiền thu (₫)" hint={plan ? t('Giá niêm yết {price}', { price: fmtMoney(plan.price) }) : undefined}><Input type="number" min={0} step={1000} value={price} onChange={(e) => setPrice(e.target.value)} /></Field>
           <Field label="Ghi chú" className="span-2"><Textarea maxLength={255} value={note} onChange={(e) => setNote(e.target.value)} placeholder="VD: chuyển khoản, giảm 10% sinh viên" /></Field>
         </div>
         {preview && (
           <Alert kind={preview.chained ? 'info' : 'success'}>
-            Hiệu lực <b>{fmtDate(preview.startDate)}</b> → <b>{fmtDate(preview.endDate)}</b>
-            {preview.chained && ' · nối tiếp ngay sau gói hiện tại'}
+            {tn('Hiệu lực {from} → {to}', { from: <b>{fmtDate(preview.startDate)}</b>, to: <b>{fmtDate(preview.endDate)}</b> })}
+            {preview.chained && t(' · nối tiếp ngay sau gói hiện tại')}
           </Alert>
         )}
       </div>

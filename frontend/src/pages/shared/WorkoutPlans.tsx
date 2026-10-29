@@ -5,6 +5,7 @@ import type { PlanStatus, WorkoutPlanSummary } from '../../api/types';
 import { Card, Empty, ErrorState, LoadingBlock, PageHead, Person, SearchInput, Segmented, StatusBadge, Button } from '../../components/ui';
 import { fmtDate, planStatus, relativeTime } from '../../lib/format';
 import { useAsync } from '../../lib/hooks';
+import { t } from '../../i18n';
 
 type Filter = 'ALL' | PlanStatus;
 
@@ -32,15 +33,15 @@ export default function WorkoutPlans() {
           : list.length === 0 ? <Empty icon="clipboard" title="Không có giáo án" desc="Bấm “Soạn giáo án” để bắt đầu." /> : (
             <div className="table-wrap">
               <table className="table">
-                <thead><tr><th>Giáo án</th><th>Hội viên</th><th>HLV</th><th>Thời gian</th><th>Nội dung</th><th>Trạng thái</th></tr></thead>
+                <thead><tr><th>{t('Giáo án')}</th><th>{t('Hội viên')}</th><th>{t('HLV')}</th><th>{t('Thời gian')}</th><th>{t('Nội dung')}</th><th>{t('Trạng thái')}</th></tr></thead>
                 <tbody>
                   {list.map((p) => (
                     <tr key={p.id} className="clickable" onClick={() => navigate(`/workout-plans/${p.id}`)}>
-                      <td><b>{p.name}</b><div className="tiny faint">Tạo {relativeTime(p.createdAt)}</div></td>
+                      <td><b>{p.name}</b><div className="tiny faint">{t('Tạo {d}', { d: relativeTime(p.createdAt) })}</div></td>
                       <td><Person name={p.memberName} size="sm" /></td>
                       <td className="muted">{p.trainerName ?? '—'}</td>
                       <td className="small nowrap">{fmtDate(p.startDate)} → {fmtDate(p.endDate)}</td>
-                      <td className="small">{p.trainingDays} ngày/tuần · {p.itemCount} bài</td>
+                      <td className="small">{t('{d} ngày/tuần · {n} bài', { d: p.trainingDays, n: p.itemCount })}</td>
                       <td><StatusBadge map={planStatus} value={p.status} /></td>
                     </tr>
                   ))}

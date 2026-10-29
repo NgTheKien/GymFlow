@@ -28,6 +28,15 @@ export function t(vi: string, vars?: Vars): string {
   return vars ? s.replace(/\{(\w+)\}/g, (_, k: string) => String(vars[k] ?? '')) : s;
 }
 
+/**
+ * Dịch cả câu rồi chèn phần tử JSX vào chỗ {tên}, để câu có chữ đậm/link vẫn dịch nguyên câu
+ * (tiếng Anh có thể đổi thứ tự các vế). VD: tn('Gói {plan} còn {n} ngày', { plan: <b>{name}</b>, n: 3 }).
+ */
+export function tn(vi: string, nodes: Record<string, ReactNode>): ReactNode {
+  const parts = t(vi).split(/\{(\w+)\}/g);
+  return <>{parts.map((p, i) => (i % 2 === 1 ? <Fragment key={i}>{nodes[p] ?? ''}</Fragment> : p))}</>;
+}
+
 /** Dịch node con khi nó là chuỗi (hoặc mảng có chuỗi); phần tử JSX giữ nguyên. */
 export function tx(node: ReactNode): ReactNode {
   if (typeof node === 'string') return t(node);

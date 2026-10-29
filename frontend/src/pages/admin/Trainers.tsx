@@ -7,6 +7,7 @@ import { Alert, Badge, Button, Card, Confirm, Empty, ErrorState, Field, Input, L
 import { DAYS } from '../../lib/format';
 import { errMsg, fieldErrs, useAsync } from '../../lib/hooks';
 import { ShiftEditor } from '../shared/Profile';
+import { t, tn } from '../../i18n';
 
 export default function Trainers() {
   const toast = useToast();
@@ -22,29 +23,29 @@ export default function Trainers() {
         actions={<Button variant="primary" icon="plus" onClick={() => setEditing('new')}>Thêm HLV</Button>} />
       {error ? <ErrorState message={error} onRetry={reload} /> : loading || !data ? <LoadingBlock rows={6} /> : data.length === 0 ? <Card><Empty icon="badge" title="Chưa có HLV" /></Card> : (
         <div className="grid grid-3">
-          {data.map((t) => {
-            const hours = t.shifts.reduce((a, s) => a + (Number(s.endTime.slice(0, 2)) * 60 + Number(s.endTime.slice(3, 5)) - Number(s.startTime.slice(0, 2)) * 60 - Number(s.startTime.slice(3, 5))) / 60, 0);
-            const days = new Set(t.shifts.map((s) => s.dayOfWeek));
+          {data.map((tr) => {
+            const hours = tr.shifts.reduce((a, s) => a + (Number(s.endTime.slice(0, 2)) * 60 + Number(s.endTime.slice(3, 5)) - Number(s.startTime.slice(0, 2)) * 60 - Number(s.startTime.slice(3, 5))) / 60, 0);
+            const days = new Set(tr.shifts.map((s) => s.dayOfWeek));
             return (
-              <Card key={t.id} className="hoverable">
+              <Card key={tr.id} className="hoverable">
                 <div className="row between" style={{ alignItems: 'flex-start' }}>
-                  <Person name={t.fullName} sub={t.email} />
-                  {t.active ? <Badge tone="green">Đang nhận HV</Badge> : <Badge tone="muted">Tạm ngừng</Badge>}
+                  <Person name={tr.fullName} sub={tr.email} />
+                  {tr.active ? <Badge tone="green">Đang nhận HV</Badge> : <Badge tone="muted">Tạm ngừng</Badge>}
                 </div>
                 <div className="stack-sm mt-16 small">
-                  <div className="row"><Icon name="target" size={15} className="ok" />{t.specialty ?? 'Chưa cập nhật chuyên môn'}</div>
-                  <div className="row"><Icon name="trophy" size={15} className="ok" />{t.experienceYears} năm kinh nghiệm{t.certificates ? ` · ${t.certificates}` : ''}</div>
-                  <div className="row"><Icon name="phone" size={15} className="ok" />{t.phone ?? '—'}</div>
+                  <div className="row"><Icon name="target" size={15} className="ok" />{tr.specialty ?? t('Chưa cập nhật chuyên môn')}</div>
+                  <div className="row"><Icon name="trophy" size={15} className="ok" />{t('{n} năm kinh nghiệm', { n: tr.experienceYears })}{tr.certificates ? ` · ${tr.certificates}` : ''}</div>
+                  <div className="row"><Icon name="phone" size={15} className="ok" />{tr.phone ?? '—'}</div>
                 </div>
                 <div className="row mt-16" style={{ gap: 4 }}>
                   {DAYS.map((d, i) => <span key={d} className={`chip ${days.has(i + 1) ? 'on' : ''}`} style={{ padding: '0 7px' }}>{d}</span>)}
                 </div>
                 <div className="row between mt-16">
-                  <span className="tiny faint"><b className="num" style={{ color: 'var(--ink)', fontSize: 16 }}>{t.memberCount}</b> hội viên · {Math.round(hours)} giờ/tuần</span>
+                  <span className="tiny faint">{tn('{n} hội viên · {h} giờ/tuần', { n: <b className="num" style={{ color: 'var(--ink)', fontSize: 16 }}>{tr.memberCount}</b>, h: Math.round(hours) })}</span>
                   <div className="row" style={{ gap: 2 }}>
-                    <Button size="sm" variant="ghost" icon="clock" aria-label="Ca làm" title="Ca làm" onClick={() => setShifts(t)} />
-                    <Button size="sm" variant="ghost" icon="edit" aria-label="Sửa" onClick={() => setEditing(t)} />
-                    <Button size="sm" variant="ghost" icon={t.active ? 'ban' : 'play'} aria-label={t.active ? 'Tạm ngừng' : 'Kích hoạt'} title={t.active ? 'Tạm ngừng nhận HV' : 'Kích hoạt'} onClick={() => setToggling(t)} />
+                    <Button size="sm" variant="ghost" icon="clock" aria-label="Ca làm" title="Ca làm" onClick={() => setShifts(tr)} />
+                    <Button size="sm" variant="ghost" icon="edit" aria-label="Sửa" onClick={() => setEditing(tr)} />
+                    <Button size="sm" variant="ghost" icon={tr.active ? 'ban' : 'play'} aria-label={tr.active ? 'Tạm ngừng' : 'Kích hoạt'} title={tr.active ? 'Tạm ngừng nhận HV' : 'Kích hoạt'} onClick={() => setToggling(tr)} />
                   </div>
                 </div>
               </Card>
@@ -56,19 +57,19 @@ export default function Trainers() {
       {editing && <TrainerForm trainer={editing === 'new' ? undefined : editing} onClose={() => setEditing(null)}
         onSaved={(c) => { setEditing(null); void reload(); if (c) setCreated(c); }} />}
       {shifts && (
-        <Modal title={`Ca làm · ${shifts.fullName}`} size="wide" onClose={() => setShifts(null)}>
+        <Modal title={t('Ca làm · {name}', { name: shifts.fullName })} size="wide" onClose={() => setShifts(null)}>
           <ShiftEditor trainer={shifts} onSaved={() => { setShifts(null); void reload(); }} />
         </Modal>
       )}
       {toggling && <Confirm title={toggling.active ? 'Tạm ngừng HLV?' : 'Kích hoạt HLV?'} confirmText={toggling.active ? 'Tạm ngừng' : 'Kích hoạt'} danger={toggling.active}
-        message={toggling.active ? `${toggling.fullName} sẽ không được phân công hội viên mới hay xếp lịch mới. Hội viên hiện tại vẫn giữ nguyên.` : `${toggling.fullName} sẽ nhận hội viên mới trở lại.`}
+        message={toggling.active ? t('{name} sẽ không được phân công hội viên mới hay xếp lịch mới. Hội viên hiện tại vẫn giữ nguyên.', { name: toggling.fullName }) : t('{name} sẽ nhận hội viên mới trở lại.', { name: toggling.fullName })}
         onClose={() => setToggling(null)}
         onConfirm={async () => { try { await api.put(`/trainers/${toggling.id}/active`, { active: !toggling.active }); toast.success('Đã cập nhật'); void reload(); } catch (e) { toast.error(errMsg(e)); throw e; } }} />}
       {created && (
         <Modal title="Đã tạo HLV" size="narrow" onClose={() => setCreated(null)} footer={<Button variant="primary" onClick={() => setCreated(null)}>Đã hiểu</Button>}>
           <div className="stack">
             <Person name={created.trainer.fullName} sub={created.trainer.email} />
-            {created.temporaryPassword ? <Alert kind="info">Mật khẩu tạm: <b className="num">{created.temporaryPassword}</b></Alert> : <Alert kind="success">HLV dùng mật khẩu bạn đã đặt.</Alert>}
+            {created.temporaryPassword ? <Alert kind="info">{tn('Mật khẩu tạm: {pw}', { pw: <b className="num">{created.temporaryPassword}</b> })}</Alert> : <Alert kind="success">HLV dùng mật khẩu bạn đã đặt.</Alert>}
           </div>
         </Modal>
       )}
