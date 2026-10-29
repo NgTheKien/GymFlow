@@ -1,0 +1,8 @@
+# Ghép thêm khi deploy bằng GitHub Actions: dùng image đã build sẵn trên Docker Hub thay vì build trên VPS.
+#   docker compose -p gymflow -f compose.yaml -f compose.prod.yaml -f compose.deploy.yaml up -d --no-build
+# BACKEND_IMAGE, FRONTEND_IMAGE, IMAGE_TAG do deploy.yml truyền vào.
+services:
+  backend:
+    image: ${BACKEND_IMAGE}:${IMAGE_TAG:-latest}
+  frontend:
+    image: ${FRONTEND_IMAGE}:${IMAGE_TAG:-latest}

@@ -1,0 +1,109 @@
+name: Deploy
+
+# Push lên main: build image trên GitHub (VPS chỉ ~2 GB RAM, build tại chỗ hay bị Killed),
+# đẩy lên Docker Hub, rồi SSH vào VPS kéo image mới và chạy lại backend + frontend.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Hai lần push liền nhau thì lần sau chờ lần trước deploy xong
+concurrency:
+  group: deploy-vps
+  cancel-in-progress: false
+
+env:
+  BACKEND_IMAGE: ${{ secrets.DOCKER_USERNAME }}/gymflow-backend
+  FRONTEND_IMAGE: ${{ secrets.DOCKER_USERNAME }}/gymflow-frontend
+
+jobs:
+  build-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: true
+          # Tag theo commit để quay lại bản cũ được; latest để VPS kéo mặc định
+          tags: |
+            ${{ env.BACKEND_IMAGE }}:${{ github.sha }}
+            ${{ env.BACKEND_IMAGE }}:latest
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+
+  build-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      # Không cần VITE_API_BASE_URL: nginx trong image proxy /api cùng origin
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
+            ${{ env.FRONTEND_IMAGE }}:latest
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
+
+  deploy:
+    needs: [build-backend, build-frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Đóng gói các file compose
+        run: |
+          echo "COMPOSE_B64=$(base64 -w 0 compose.yaml)" >> "$GITHUB_ENV"
+          echo "PROD_B64=$(base64 -w 0 compose.prod.yaml)" >> "$GITHUB_ENV"
+          echo "DEPLOY_B64=$(base64 -w 0 compose.deploy.yaml)" >> "$GITHUB_ENV"
+          echo "IMAGE_TAG=${{ github.sha }}" >> "$GITHUB_ENV"
+      - uses: appleboy/ssh-action@v1.2.0
+        env:
+          BACKEND_IMAGE: ${{ env.BACKEND_IMAGE }}
+          FRONTEND_IMAGE: ${{ env.FRONTEND_IMAGE }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: 22
+          command_timeout: 15m
+          envs: COMPOSE_B64,PROD_B64,DEPLOY_B64,IMAGE_TAG,BACKEND_IMAGE,FRONTEND_IMAGE
+          script: |
+            set -e
+            cd /opt/gymflow
+            # .env (mật khẩu, JWT_SECRET) nằm sẵn trên VPS, không bao giờ đi qua GitHub
+            test -f .env || { echo "Thiếu /opt/gymflow/.env"; exit 1; }
+
+            echo "$COMPOSE_B64" | base64 -d > compose.yaml
+            echo "$PROD_B64"    | base64 -d > compose.prod.yaml
+            echo "$DEPLOY_B64"  | base64 -d > compose.deploy.yaml
+
+            # -p gymflow giữ đúng tên project cũ → dùng lại volume MySQL đang có, không mất dữ liệu
+            DC="docker compose -p gymflow -f compose.yaml -f compose.prod.yaml -f compose.deploy.yaml"
+            export BACKEND_IMAGE FRONTEND_IMAGE IMAGE_TAG
+
+            $DC up -d mysql
+            for i in 1 2 3; do $DC pull backend frontend && break || { echo "Kéo image lỗi, thử lại..."; sleep 5; }; done
+            $DC up -d --no-build backend frontend
+
+            echo "Đợi backend healthy..."
+            for i in $(seq 1 30); do
+              s=$(docker inspect -f '{{.State.Health.Status}}' gymflow-backend 2>/dev/null || echo none)
+              [ "$s" = healthy ] && { echo "Backend healthy"; break; }
+              [ "$i" = 30 ] && { echo "Backend không healthy sau 5 phút"; docker logs --tail 80 gymflow-backend; exit 1; }
+              sleep 10
+            done
+
+            docker image prune -f
+            echo "Deploy xong bản $IMAGE_TAG"
