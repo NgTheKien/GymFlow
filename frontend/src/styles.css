@@ -842,3 +842,52 @@ table.table { width: 100%; border-collapse: collapse; font-size: 14px; }
   .tt-icon, .tt-core, .tt-rays, .tt-cut { transition: none; }
   .theme-toggle .tt:hover .tt-icon, .theme-toggle .tt:active .tt-icon { transform: none; }
 }
+/* ---------- Phân trang ---------- */
+.pager-num { min-width: 32px; height: 32px; padding: 0 8px; border-radius: 8px; background: transparent; color: var(--muted); font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.pager-num:hover { background: var(--surface); color: var(--ink); }
+.pager-num.on { background: rgba(0, 178, 75, 0.16); color: var(--primary-bright); }
+.pager-num:focus-visible { outline: 2px solid var(--primary-bright); outline-offset: 2px; }
+.pager-gap { min-width: 20px; text-align: center; color: var(--faint); }
+.pager-size { display: inline-flex; align-items: center; gap: 6px; margin-right: 8px; font-size: 13px; color: var(--muted); }
+.select.select-sm { width: auto; height: 32px; padding: 0 28px 0 10px; font-size: 13px; }
+@media (max-width: 640px) { .pager { flex-wrap: wrap; } .pager-num:not(.on) { display: none; } .pager-gap { display: none; } }
+/* ---------- Form soạn bài tập ---------- */
+.form-section { padding-bottom: 18px; border-bottom: 1px solid var(--hairline-soft); }
+.form-section:last-child { border-bottom: 0; padding-bottom: 0; }
+.form-section-head { margin-bottom: 12px; }
+.form-section-head h3 { margin: 0; font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--primary-bright); }
+.form-section-head p { margin: 4px 0 0; }
+.char-count { margin-top: 4px; text-align: right; font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; }
+.char-count.near { color: var(--warning); font-weight: 700; }
+.chip-toggle { cursor: pointer; border: 1px solid var(--hairline); }
+.chip-toggle.on { border-color: var(--primary); }
+.modal-foot-hint { margin-right: auto; align-self: center; }
+@media (max-width: 640px) { .modal-foot-hint { display: none; } }
+/* ---------- Thẻ bài tập ---------- */
+.ex-title { padding: 0; background: none; border: 0; color: var(--ink); font: inherit; font-size: 15px; font-weight: 700; text-align: left; cursor: pointer; }
+.ex-title:hover { color: var(--primary-bright); }
+.ex-title:focus-visible { outline: 2px solid var(--primary-bright); outline-offset: 2px; border-radius: 4px; }
+.ex-card.is-hidden { opacity: .62; }
+/* ---------- Viền sáng chạy quanh khung (lấy ý tưởng Border Beam của libraries.dev, viết lại bằng CSS thuần) ----------
+   Một dải sáng xanh lá → xanh dương chạy dọc viền. Dùng tiết chế: gói nổi bật, khung kêu gọi đăng ký, form đăng nhập.
+   Trình duyệt chưa hỗ trợ @property vẫn thấy viền sáng đứng yên; người bật "giảm chuyển động" thì dừng hẳn. */
+@property --beam-angle { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+.beam { --beam-angle: 0deg; --beam-width: 1.5px; --beam-speed: 4s; position: relative; isolation: isolate; }
+.beam-slow { --beam-speed: 7s; }
+.beam::before {
+  content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  border-radius: inherit; padding: var(--beam-width);
+  background: conic-gradient(from var(--beam-angle), transparent 0 64%, rgba(0, 217, 91, 0.25) 72%, var(--primary-bright) 82%, #00c2ff 90%, transparent 97%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  animation: beam-spin var(--beam-speed) linear infinite;
+}
+@keyframes beam-spin { to { --beam-angle: 360deg; } }
+/* Nền sáng: dải cyan khó thấy trên nền trắng → đậm hơn */
+:root[data-theme='light'] .beam::before {
+  background: conic-gradient(from var(--beam-angle), transparent 0 64%, rgba(0, 163, 68, 0.3) 72%, var(--primary) 82%, var(--secondary) 90%, transparent 97%);
+}
+/* Form đăng nhập thành thẻ có nền để viền sáng có chỗ bám */
+.auth-card { padding: 28px; border-radius: var(--r-lg); background: var(--surface-2); border: 1px solid var(--hairline); box-shadow: var(--shadow-float); }
+@media (max-width: 560px) { .auth-card { padding: 20px; box-shadow: none; } }
+@media (prefers-reduced-motion: reduce) { .beam::before { animation: none; } }

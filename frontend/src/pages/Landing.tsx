@@ -191,7 +191,7 @@ export default function Landing() {
           {plans.error && <p className="muted">{t('Chưa tải được bảng giá. Vui lòng tải lại trang sau ít phút.')}</p>}
           {plans.data?.length === 0 && <p className="muted">{t('Bảng giá đang được cập nhật.')}</p>}
           {plans.data?.map((p) => (
-            <article key={p.id} className={`card price-card hoverable ${p.id === best ? 'best' : ''}`}>
+            <article key={p.id} className={`card price-card hoverable ${p.id === best ? 'best beam' : ''}`}>
               {p.id === best && <span className="ribbon">{t('PHỔ BIẾN')}</span>}
               <div className="kicker" style={{ marginBottom: 0 }}>{durationLabel(p.durationDays)}</div>
               <h3 style={{ fontSize: 20 }}>{t(p.name)}</h3>
@@ -268,7 +268,7 @@ export default function Landing() {
       </section>
 
       <section className="section">
-        <div className="cta-band">
+        <div className="cta-band beam beam-slow">
           <div>
             <h2 className="display-sm">{t('Sẵn sàng cho buổi tập đầu tiên?')}</h2>
             <p className="muted mt-8">{t('Tạo tài khoản miễn phí, ghé quầy chọn gói và bắt đầu ngay trong tuần này.')}</p>

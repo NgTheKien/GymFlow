@@ -88,7 +88,7 @@ export default function Login() {
       <AuthArt />
       <div className="auth-form">
         <ThemeToggle className="auth-theme" />
-        <form className="box stack page" onSubmit={submit} noValidate>
+        <form className="box auth-card beam stack page" onSubmit={submit} noValidate>
           <Link to="/" className="link small row" style={{ gap: 6, width: 'fit-content' }}><Icon name="arrowLeft" size={15} />{t('Trang chủ')}</Link>
           <div>
             <div className="kicker">{t('Hội viên & nhân viên')}</div>

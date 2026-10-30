@@ -3,10 +3,10 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../../api/client';
 import type { Subscription, SubscriptionState } from '../../api/types';
 import { SubscriptionForm } from '../../components/SubscriptionForm';
-import { Button, Card, Empty, ErrorState, LoadingBlock, PageHead, Person, SearchInput, Segmented, Stat, StatusBadge } from '../../components/ui';
+import { Button, Card, Empty, ErrorState, LoadingBlock, PageHead, Pager, Person, SearchInput, Segmented, Select, Stat, StatusBadge } from '../../components/ui';
 import { downloadCsv } from '../../lib/csv';
 import { fmtDate, fmtDateTime, fmtMoney, fmtMoneyShort, subState } from '../../lib/format';
-import { useAsync } from '../../lib/hooks';
+import { useAsync, usePaged } from '../../lib/hooks';
 import { CancelSubscription } from '../shared/MemberDetail';
 import { t } from '../../i18n';
 
@@ -17,14 +17,22 @@ export default function Subscriptions() {
   const [params, setParams] = useSearchParams();
   const [filter, setFilter] = useState<Filter>((params.get('state') as Filter) ?? 'ALL');
   const [q, setQ] = useState('');
+  const [planId, setPlanId] = useState('');
   const [creating, setCreating] = useState(false);
   const [cancelling, setCancelling] = useState<Subscription | null>(null);
   const { data, error, loading, reload } = useAsync(() => api.get<Subscription[]>('/subscriptions'), []);
 
   const list = useMemo(() => (data ?? []).filter((s) => (filter === 'ALL' || s.state === filter)
-    && (!q || `${s.memberName} ${s.memberCode} ${s.planName}`.toLowerCase().includes(q.toLowerCase()))), [data, filter, q]);
+    && (!planId || String(s.planId) === planId)
+    && (!q || `${s.memberName} ${s.memberCode} ${s.planName}`.toLowerCase().includes(q.toLowerCase()))), [data, filter, planId, q]);
+  // Danh sách gói lấy từ chính các đăng ký đã có, để lọc được cả gói đã ngừng bán
+  const planOptions = useMemo(() => [...new Map((data ?? []).map((s) => [s.planId, s.planName])).entries()]
+    .sort((a, b) => a[1].localeCompare(b[1], 'vi')), [data]);
+  const paged = usePaged(list, 'subscriptions', `${filter}|${planId}|${q}`);
   const count = (st: SubscriptionState) => (data ?? []).filter((s) => s.state === st).length;
-  const month = new Date().toISOString().slice(0, 7);
+  // Tháng theo giờ máy (VN), không dùng toISOString vì đó là giờ UTC – sau 0h ngày 1 vẫn bị tính sang tháng trước
+  const now = new Date();
+  const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   const monthRevenue = (data ?? []).filter((s) => !s.cancelled && s.createdAt.startsWith(month)).reduce((a, s) => a + s.pricePaid, 0);
 
   const changeFilter = (f: Filter) => { setFilter(f); if (f === 'ALL') params.delete('state'); else params.set('state', f); setParams(params, { replace: true }); };
@@ -50,6 +58,10 @@ export default function Subscriptions() {
 
       <div className="toolbar">
         <SearchInput value={q} onChange={setQ} placeholder="Tìm hội viên, mã, gói…" />
+        <Select value={planId} onChange={(e) => setPlanId(e.target.value)} aria-label="Gói tập">
+          <option value="">{t('Mọi gói tập')}</option>
+          {planOptions.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+        </Select>
         <div className="spacer" />
         <Segmented<Filter> value={filter} onChange={changeFilter} options={[
           { value: 'ALL', label: 'Tất cả' }, { value: 'ACTIVE', label: 'Hiệu lực' }, { value: 'EXPIRING', label: t('Sắp hết {n}', { n: count('EXPIRING') }) },
@@ -64,7 +76,7 @@ export default function Subscriptions() {
               <table className="table">
                 <thead><tr><th>{t('Hội viên')}</th><th>{t('Gói')}</th><th>{t('Thời gian')}</th><th>{t('Số tiền')}</th><th>{t('Trạng thái')}</th><th>{t('Ngày thu')}</th><th /></tr></thead>
                 <tbody>
-                  {list.slice(0, 300).map((s) => (
+                  {paged.items.map((s) => (
                     <tr key={s.id}>
                       <td className="clickable" onClick={() => navigate(`/members/${s.memberId}`)}><Person name={s.memberName} sub={s.memberCode} size="sm" /></td>
                       <td>{s.planName}</td>
@@ -79,6 +91,7 @@ export default function Subscriptions() {
               </table>
             </div>
           )}
+        {list.length > 0 && <Pager page={paged.page} totalPages={paged.totalPages} total={paged.total} onPage={paged.setPage} size={paged.size} sizes={[10, 20, 50, 100]} onSize={paged.setSize} />}
       </Card>
       {creating && <SubscriptionForm onClose={() => setCreating(false)} onSaved={() => { setCreating(false); void reload(); }} />}
       {cancelling && <CancelSubscription sub={cancelling} onClose={() => setCancelling(null)} onDone={() => { setCancelling(null); void reload(); }} />}

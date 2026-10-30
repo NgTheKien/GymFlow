@@ -220,16 +220,49 @@ export function Meter({ value, max = 100, color }: { value: number; max?: number
   return <div className="meter" role="progressbar" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100}><i style={{ width: `${pct}%`, ['--c' as string]: color }} /></div>;
 }
 
-export function Pager({ page, totalPages, total, onPage }: { page: number; totalPages: number; total: number; onPage: (p: number) => void }) {
-  if (totalPages <= 1) return <div className="pager"><span>{t('{n} bản ghi', { n: total })}</span></div>;
+/** Các số trang cần hiện: luôn có trang đầu, trang cuối và 1 trang mỗi bên trang hiện tại; khoảng trống = null (…). */
+function pageWindow(page: number, totalPages: number): (number | null)[] {
+  const keep = new Set([0, totalPages - 1, page - 1, page, page + 1]);
+  const out: (number | null)[] = [];
+  for (let i = 0; i < totalPages; i++) {
+    if (keep.has(i)) out.push(i);
+    else if (out[out.length - 1] !== null) out.push(null);
+  }
+  return out;
+}
+
+/**
+ * Thanh phân trang. page tính từ 0. Truyền size + sizes + onSize để cho chọn số dòng mỗi trang.
+ * Dùng chung cho phân trang phía server (Page<T>) và phía client (usePaged).
+ */
+export function Pager({ page, totalPages, total, onPage, size, sizes, onSize }: {
+  page: number; totalPages: number; total: number; onPage: (p: number) => void;
+  size?: number; sizes?: number[]; onSize?: (s: number) => void;
+}) {
+  const sizePicker = size && sizes && onSize && total > Math.min(...sizes) && (
+    <label className="pager-size">
+      <span>{t('Hiển thị')}</span>
+      <select className="select select-sm" value={size} onChange={(e) => onSize(Number(e.target.value))} aria-label={t('Số dòng mỗi trang')}>
+        {sizes.map((s) => <option key={s} value={s}>{s}</option>)}
+      </select>
+    </label>
+  );
+  if (totalPages <= 1) return <div className="pager"><span>{t('{n} bản ghi', { n: total })}</span>{sizePicker}</div>;
+  const from = size ? page * size + 1 : null;
+  const to = size ? Math.min(total, (page + 1) * size) : null;
   return (
-    <div className="pager">
-      <span>{t('{n} bản ghi · trang {p}/{tp}', { n: total, p: page + 1, tp: totalPages })}</span>
-      <div className="row">
+    <nav className="pager" aria-label={t('Phân trang')}>
+      <span>{from ? t('{a}–{b} trên {n} bản ghi', { a: from, b: to ?? total, n: total }) : t('{n} bản ghi · trang {p}/{tp}', { n: total, p: page + 1, tp: totalPages })}</span>
+      <div className="row row-wrap" style={{ gap: 4 }}>
+        {sizePicker}
         <Button size="sm" icon="chevronLeft" disabled={page === 0} onClick={() => onPage(page - 1)} aria-label="Trang trước" />
+        {pageWindow(page, totalPages).map((p, i) => p === null
+          ? <span key={`gap${i}`} className="pager-gap" aria-hidden>…</span>
+          : <button key={p} type="button" className={`pager-num ${p === page ? 'on' : ''}`} aria-current={p === page ? 'page' : undefined}
+              aria-label={t('Trang {p}', { p: p + 1 })} onClick={() => onPage(p)}>{p + 1}</button>)}
         <Button size="sm" icon="chevronRight" disabled={page + 1 >= totalPages} onClick={() => onPage(page + 1)} aria-label="Trang sau" />
       </div>
-    </div>
+    </nav>
   );
 }
 

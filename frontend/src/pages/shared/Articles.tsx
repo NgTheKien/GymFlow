@@ -1,13 +1,13 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api/client';
 import type { Article, ArticleAction, ArticleCategory, ArticleStatus, ContentOrigin, Source } from '../../api/types';
 import { useMe } from '../../auth/AuthContext';
 import { HealthDisclaimer, Prose, SourceList } from '../../components/Content';
 import { useToast } from '../../components/Toast';
-import { Alert, Button, Card, Confirm, Empty, ErrorState, Field, Input, LoadingBlock, Modal, PageHead, Select, StatusBadge, Textarea } from '../../components/ui';
+import { Alert, Button, Card, Confirm, Empty, ErrorState, Field, Input, LoadingBlock, Modal, PageHead, Pager, SearchInput, Select, StatusBadge, Textarea } from '../../components/ui';
 import { articleCategoryLabel, articleStatusLabel, fmtDateTime } from '../../lib/format';
-import { errMsg, fieldErrs, useAsync } from '../../lib/hooks';
+import { errMsg, fieldErrs, useAsync, usePaged } from '../../lib/hooks';
 import { t } from '../../i18n';
 
 const CATEGORIES = Object.keys(articleCategoryLabel) as ArticleCategory[];
@@ -25,6 +25,11 @@ export default function Articles() {
   const [editing, setEditing] = useState<Article | 'new' | null>(null);
   const [viewingId, setViewingId] = useState<number | null>(null);
   const { data, error, loading, reload } = useAsync(() => api.get<Article[]>('/articles', { status }), [status]);
+  const [q, setQ] = useState('');
+  const [category, setCategory] = useState<'' | ArticleCategory>('');
+  const list = useMemo(() => (data ?? []).filter((a) => (!category || a.category === category)
+    && (!q || `${a.title} ${a.slug} ${a.authorName ?? ''}`.toLowerCase().includes(q.toLowerCase()))), [data, category, q]);
+  const paged = usePaged(list, 'articles', `${status}|${category}|${q}`);
   const viewing = data?.find((a) => a.id === viewingId) ?? null;
   const canEdit = (a: Article) => isAdmin || a.authorId === me.id;
 
@@ -37,7 +42,14 @@ export default function Articles() {
         <button className={`chip ${status === '' ? 'on' : ''}`} onClick={() => setStatus('')}>{t('Tất cả')}</button>
         {STATUSES.map((s) => <button key={s} className={`chip ${status === s ? 'on' : ''}`} onClick={() => setStatus(s)}>{articleStatusLabel[s][0]}</button>)}
       </div>
-      {error ? <ErrorState message={error} onRetry={reload} /> : loading && !data ? <LoadingBlock rows={5} /> : data && data.length === 0 ? (
+      <div className="toolbar">
+        <SearchInput value={q} onChange={setQ} placeholder="Tìm tiêu đề, đường dẫn, tác giả…" />
+        <Select value={category} onChange={(e) => setCategory(e.target.value as ArticleCategory | '')} aria-label="Chủ đề">
+          <option value="">{t('Mọi chủ đề')}</option>
+          {CATEGORIES.map((c) => <option key={c} value={c}>{articleCategoryLabel[c]}</option>)}
+        </Select>
+      </div>
+      {error ? <ErrorState message={error} onRetry={reload} /> : loading && !data ? <LoadingBlock rows={5} /> : list.length === 0 ? (
         <Card><Empty icon="layers" title="Không có bài viết" /></Card>
       ) : (
         <Card flush>
@@ -45,7 +57,7 @@ export default function Articles() {
             <table className="table">
               <thead><tr><th>{t('Bài viết')}</th><th>{t('Chủ đề')}</th><th>{t('Trạng thái')}</th><th>{t('Nguồn')}</th><th>{t('Cập nhật')}</th><th aria-label={t('Thao tác')} /></tr></thead>
               <tbody>
-                {data?.map((a) => (
+                {paged.items.map((a) => (
                   <tr key={a.id}>
                     <td><b>{a.title}</b><div className="tiny muted">/{a.slug}{a.authorName && ` · ${a.authorName}`}</div></td>
                     <td>{articleCategoryLabel[a.category]}</td>
@@ -61,6 +73,7 @@ export default function Articles() {
               </tbody>
             </table>
           </div>
+          <Pager page={paged.page} totalPages={paged.totalPages} total={paged.total} onPage={paged.setPage} size={paged.size} sizes={[10, 20, 50]} onSize={paged.setSize} />
         </Card>
       )}
       {viewing && <ArticleReview article={viewing} isAdmin={isAdmin} canEdit={canEdit(viewing)} onClose={() => setViewingId(null)} onChanged={() => void reload()} />}
