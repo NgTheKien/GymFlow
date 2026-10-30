@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
-import type { MembershipPlan } from '../api/types';
+import type { ArticleSummary, MembershipPlan } from '../api/types';
 import { useAuth } from '../auth/AuthContext';
 import { Brand } from '../components/Brand';
 import { Icon, type IconName } from '../components/Icon';
 import { Button } from '../components/ui';
-import { durationLabel, fmtMoney } from '../lib/format';
+import { articleCategoryLabel, durationLabel, fmtMoney } from '../lib/format';
 import { useAsync } from '../lib/hooks';
 import { SITE } from '../site';
 import { ThemeToggle } from '../theme/ThemeToggle';
@@ -36,9 +36,27 @@ const STEPS = [
   { title: 'Bắt đầu tập', desc: 'Huấn luyện viên xếp lịch, soạn giáo án – bạn chỉ việc đến và tập.' },
 ];
 
+// Mỗi điểm cam kết ứng với một quy tắc đang chạy thật trong hệ thống (duyệt nội dung, phân quyền, gói tập).
+const TRUST: { icon: IconName; title: string; desc: string }[] = [
+  { icon: 'shield', title: 'Nội dung có nguồn', desc: 'Bài tập và kiến thức sức khoẻ ghi rõ nguồn tham khảo, chỉ hiển thị sau khi quản lý duyệt.' },
+  { icon: 'lock', title: 'Dữ liệu của riêng bạn', desc: 'Hội viên chỉ xem được hồ sơ, lịch tập và tiến độ của chính mình.' },
+  { icon: 'ticket', title: 'Không phí ẩn', desc: 'Giá gói hiển thị công khai, ngày hết hạn luôn có trên tài khoản.' },
+];
+
+const FAQ = [
+  { q: 'Đăng ký tài khoản có mất phí không?', a: 'Không. Tạo tài khoản hội viên trực tuyến miễn phí; bạn chỉ trả tiền khi chọn gói tập tại quầy lễ tân.' },
+  { q: 'Bao lâu thì gói tập được kích hoạt?', a: 'Gói được kích hoạt ngay khi lễ tân xác nhận thanh toán, và hiện trên tài khoản của bạn cùng ngày bắt đầu, ngày hết hạn.' },
+  { q: 'Gia hạn sớm có bị mất ngày không?', a: 'Không. Gói mới được nối tiếp ngay sau ngày kết thúc của gói hiện tại. Hệ thống nhắc bạn trước khi gói hết hạn 7 ngày.' },
+  { q: 'Ai xem được lịch tập và cân nặng của tôi?', a: 'Chỉ bạn, huấn luyện viên được phân công cho bạn và quản lý phòng tập.' },
+  { q: 'Thông tin sức khoẻ trên trang có thay cho tư vấn y tế không?', a: 'Không. Nội dung chỉ mang tính tham khảo chung. Nếu có bệnh lý, chấn thương hoặc đang mang thai, hãy hỏi ý kiến nhân viên y tế trước khi tập.' },
+  { q: 'Tôi quên mật khẩu thì làm sao?', a: 'Chọn "Quên mật khẩu?" ở trang đăng nhập và làm theo hướng dẫn để đặt mật khẩu mới.' },
+];
+
 export default function Landing() {
   const { user } = useAuth();
   const plans = useAsync(() => api.get<MembershipPlan[]>('/plans/public'), []);
+  const articles = useAsync(() => api.get<ArticleSummary[]>('/articles/public', { q: '', category: '' }), []);
+  const latest = articles.data?.slice(0, 3) ?? [];
   const best = plans.data && plans.data.length > 2 ? plans.data[1].id : null;
   const [menu, setMenu] = useState(false);
 
@@ -62,6 +80,7 @@ export default function Landing() {
           <a href="#benefits">{t('Quyền lợi')}</a>
           <a href="#plans">{t('Bảng giá')}</a>
           <Link to="/knowledge">{t('Kiến thức')}</Link>
+          <a href="#faq">{t('Hỏi đáp')}</a>
           <a href="#contact">{t('Hỗ trợ')}</a>
           <div className="nav-cta">
             {user ? (
@@ -92,6 +111,8 @@ export default function Landing() {
             </div>
           </div>
           <div className="hero-visual" aria-hidden>
+            {/* Số liệu trong các thẻ chỉ để minh hoạ giao diện ứng dụng, không phải kết quả hội viên thật */}
+            <span className="hv-note">{t('Giao diện minh hoạ')}</span>
             <div className="hv-card hv-1">
               <div className="row" style={{ gap: 8 }}><Icon name="flame" className="ok" /><span className="tiny muted">{t('Chuỗi tập')}</span></div>
               <div className="hv-num">6 <small>{t('tuần liên tiếp')}</small></div>
@@ -188,6 +209,60 @@ export default function Landing() {
                 <span>{t(user ? 'Xem gói của tôi' : 'Đăng ký để chọn gói')}</span>
               </Link>
             </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="trust-strip">
+          {TRUST.map((x) => (
+            <div key={x.title} className="trust-item">
+              <Icon name={x.icon} className="ok" />
+              <div>
+                <b>{t(x.title)}</b>
+                <p className="muted small mt-4">{t(x.desc)}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="section" id="knowledge">
+        <div className="row between row-wrap" style={{ gap: 12, alignItems: 'end' }}>
+          <div>
+            <div className="kicker">{t('Kho kiến thức')}</div>
+            <h2 className="display-sm">{t('Ăn, ngủ, tập đúng cách.')}</h2>
+            <p className="muted mt-8">{t('Dinh dưỡng, nước uống, giấc ngủ, khởi động và phòng chấn thương – mỗi bài đều ghi nguồn tham khảo.')}</p>
+          </div>
+          <Link className="btn btn-secondary" to="/knowledge"><span>{t('Xem tất cả')}</span><Icon name="arrowRight" /></Link>
+        </div>
+        {articles.loading && <div className="article-grid mt-24">{[0, 1, 2].map((i) => <div key={i} className="skeleton" style={{ height: 150 }} />)}</div>}
+        {latest.length > 0 && (
+          <div className="article-grid mt-24">
+            {latest.map((a) => (
+              <Link key={a.id} to={`/knowledge/${a.slug}`} className="article-card">
+                <span className="kicker">{articleCategoryLabel[a.category]}</span>
+                <h3>{a.title}</h3>
+                <p className="small muted">{a.summary}</p>
+                <span className="link-btn small">{t('Đọc bài')} <Icon name="arrowRight" size={14} /></span>
+              </Link>
+            ))}
+          </div>
+        )}
+        {!articles.loading && latest.length === 0 && (
+          <p className="muted small mt-16">{t('Các bài viết đang được quản lý phòng tập duyệt nội dung và nguồn, sẽ sớm xuất hiện tại đây.')}</p>
+        )}
+      </section>
+
+      <section className="section" id="faq">
+        <div className="kicker">{t('Hỏi đáp')}</div>
+        <h2 className="display-sm">{t('Câu hỏi thường gặp.')}</h2>
+        <div className="faq mt-24">
+          {FAQ.map((f) => (
+            <details key={f.q}>
+              <summary>{t(f.q)}<Icon name="chevronDown" size={18} /></summary>
+              <p className="muted">{t(f.a)}</p>
+            </details>
           ))}
         </div>
       </section>
