@@ -192,7 +192,7 @@ function ExerciseDetail({ exercise: e, canReview, onClose, onReviewed }: { exerc
   };
 
   return (
-    <Modal title={e.name} size="wide" onClose={onClose}>
+    <Modal title={e.name} size="medium" onClose={onClose}>
       <div className="stack">
         <div className="row row-wrap">
           <StatusBadge map={reviewLabel} value={e.reviewStatus} />
@@ -259,10 +259,29 @@ function Count({ value, max }: { value: string; max: number }) {
   return <div className={`char-count ${value.length > max * 0.9 ? 'near' : ''}`} aria-live="polite">{value.length}/{max}</div>;
 }
 
-function FormSection({ title, desc, children }: { title: string; desc?: string; children: ReactNode }) {
+type Tab = 'basic' | 'class' | 'guide' | 'safety' | 'source';
+const TABS: { id: Tab; label: string; desc?: string }[] = [
+  { id: 'basic', label: 'Thông tin cơ bản' },
+  { id: 'class', label: 'Phân loại', desc: 'Dùng cho bộ lọc trong thư viện và khi HLV soạn giáo án.' },
+  { id: 'guide', label: 'Hướng dẫn tập' },
+  { id: 'safety', label: 'An toàn và liều tập' },
+  { id: 'source', label: 'Nguồn và giấy phép' },
+];
+// Ô nào thuộc tab nào – để nhảy tới đúng tab khi có lỗi (kể cả lỗi theo trường do backend trả về)
+const FIELD_TAB: Record<string, Tab> = {
+  name: 'basic', nameEn: 'basic', aliases: 'basic', description: 'basic',
+  muscleGroup: 'class', secondaryMuscles: 'class', level: 'class', location: 'class', equipment: 'class', goals: 'class',
+  instructions: 'guide', breathing: 'guide', commonMistakes: 'guide', variations: 'guide', videoUrl: 'guide',
+  safetyNotes: 'safety', suggestedDose: 'safety', contentOrigin: 'source', sourceIds: 'source',
+};
+
+/** Một tab của form: chỉ tab đang chọn được vẽ, dữ liệu các tab khác vẫn giữ trong state. */
+function FormSection({ id, active, children }: { id: Tab; active: Tab; children: ReactNode }) {
+  if (id !== active) return null;
+  const meta = TABS.find((x) => x.id === id);
   return (
-    <section className="form-section">
-      <div className="form-section-head"><h3>{t(title)}</h3>{desc && <p className="tiny muted">{t(desc)}</p>}</div>
+    <section className="form-section" id={`ex-tab-${id}`} role="tabpanel" aria-labelledby={`ex-tabbtn-${id}`}>
+      {meta?.desc && <p className="tiny muted" style={{ margin: '0 0 12px' }}>{t(meta.desc)}</p>}
       <div className="form-grid">{children}</div>
     </section>
   );
@@ -291,6 +310,7 @@ function ExerciseForm({ exercise, copyOf, isAdmin, onClose, onSaved }: { exercis
   const [busy, setBusy] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [sourceQ, setSourceQ] = useState('');
+  const [tab, setTab] = useState<Tab>('basic');
   const bodyRef = useRef<HTMLDivElement>(null);
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((x) => ({ ...x, [k]: v }));
   const toggle = <T,>(list: T[], v: T) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
@@ -307,17 +327,20 @@ function ExerciseForm({ exercise, copyOf, isAdmin, onClose, onSaved }: { exercis
     return [...match].sort((a, b) => Number(f.sourceIds.includes(b.id)) - Number(f.sourceIds.includes(a.id)));
   }, [sources.data, sourceQ, f.sourceIds]);
 
+  // Chuyển sang tab chứa ô lỗi đầu tiên rồi đặt con trỏ vào ô đó
+  const showFirstError = (errs: Record<string, string>) => {
+    const first = Object.keys(errs).find((k) => FIELD_TAB[k]);
+    if (first) setTab(FIELD_TAB[first]);
+    requestAnimationFrame(() => bodyRef.current?.querySelector<HTMLElement>('.has-err')?.focus());
+  };
+
   const submit = async () => {
     if (busy || !dirty) return;
     const v: Record<string, string> = {};
     if (!f.name.trim()) v.name = 'Nhập tên bài tập';
     if (f.videoUrl.trim() && !/^https?:\/\/.+/.test(f.videoUrl.trim())) v.videoUrl = 'Link phải bắt đầu bằng http(s)://';
     setErrors(v); setError(null);
-    if (Object.keys(v).length) {
-      // Đưa ô lỗi đầu tiên vào tầm nhìn – form dài, lỗi có thể nằm ngoài màn hình
-      requestAnimationFrame(() => bodyRef.current?.querySelector<HTMLElement>('.has-err')?.focus());
-      return;
-    }
+    if (Object.keys(v).length) { showFirstError(v); return; }
     setBusy(true);
     try {
       const body = {
@@ -328,7 +351,7 @@ function ExerciseForm({ exercise, copyOf, isAdmin, onClose, onSaved }: { exercis
       if (exercise) await api.put(`/exercises/${exercise.id}`, body); else await api.post('/exercises', body);
       toast.success(exercise ? 'Đã lưu bài tập' : 'Đã thêm bài tập – đang chờ duyệt');
       onSaved();
-    } catch (e) { setError(errMsg(e)); setErrors(fieldErrs(e)); bodyRef.current?.scrollIntoView({ block: 'start' }); } finally { setBusy(false); }
+    } catch (e) { const fe = fieldErrs(e); setError(errMsg(e)); setErrors(fe); showFirstError(fe); } finally { setBusy(false); }
   };
 
   // Ctrl/⌘ + S để lưu nhanh khi đang soạn
@@ -342,21 +365,35 @@ function ExerciseForm({ exercise, copyOf, isAdmin, onClose, onSaved }: { exercis
 
   const noSource = f.sourceIds.length === 0;
   const title = exercise ? t('Sửa bài tập: {name}', { name: exercise.name }) : copyOf ? t('Nhân bản bài tập') : t('Thêm bài tập');
+  const tabHasError = (id: Tab) => Object.keys(errors).some((k) => FIELD_TAB[k] === id);
+  const tabIndex = TABS.findIndex((x) => x.id === tab);
 
   return (
     <>
-      <Modal title={title} size="wide" onClose={requestClose} footer={<>
+      <Modal title={title} size="medium" onClose={requestClose} footer={<>
         <span className="tiny faint modal-foot-hint">{dirty ? t('Có thay đổi chưa lưu') : t('Chưa có thay đổi')} · {t('Ctrl/⌘ + S để lưu')}</span>
+        {tabIndex > 0 && <Button variant="ghost" icon="chevronLeft" onClick={() => setTab(TABS[tabIndex - 1].id)}>Trước</Button>}
+        {tabIndex < TABS.length - 1 && <Button icon="chevronRight" onClick={() => setTab(TABS[tabIndex + 1].id)}>Tiếp</Button>}
         <Button variant="ghost" onClick={requestClose}>Huỷ</Button>
         <Button variant="primary" icon="check" loading={busy} disabled={!dirty} onClick={() => void submit()}>{exercise ? 'Lưu thay đổi' : 'Thêm bài tập'}</Button>
       </>}>
         <div className="stack" ref={bodyRef}>
+          <div className="form-tabs" role="tablist" aria-label={t('Các phần của bài tập')}>
+            {TABS.map((x, i) => (
+              <button key={x.id} type="button" role="tab" id={`ex-tabbtn-${x.id}`} aria-selected={tab === x.id} aria-controls={`ex-tab-${x.id}`}
+                className={`form-tab ${tab === x.id ? 'on' : ''}`} onClick={() => setTab(x.id)}>
+                <span className="form-tab-no">{i + 1}</span>{t(x.label)}
+                {tabHasError(x.id) && <span className="form-tab-dot err" aria-label={t('Có lỗi')} />}
+                {!tabHasError(x.id) && x.id === 'source' && noSource && <span className="form-tab-dot warn" aria-label={t('Chưa có nguồn')} />}
+              </button>
+            ))}
+          </div>
           {error && <Alert kind="error">{error}</Alert>}
           {!isAdmin && exercise?.reviewStatus === 'APPROVED' && <Alert kind="info">Sau khi lưu, bài sẽ quay về trạng thái "Chờ duyệt".</Alert>}
           {exercise?.reviewStatus === 'NEEDS_REVIEW' && exercise.reviewNote && <Alert kind="warning">{t('Quản lý yêu cầu chỉnh sửa:')} {exercise.reviewNote}</Alert>}
           {copyOf && <Alert kind="info">{t('Đang tạo bài mới từ "{name}". Hãy đổi tên – tên bài tập không được trùng.', { name: copyOf.name })}</Alert>}
 
-          <FormSection title="Thông tin cơ bản">
+          <FormSection id="basic" active={tab}>
             <Field label="Tên bài tập" error={errors.name} required>
               <Input maxLength={120} value={f.name} invalid={!!errors.name} onChange={(e) => set('name', e.target.value)} placeholder="VD: Squat thanh đòn sau" />
             </Field>
@@ -368,7 +405,7 @@ function ExerciseForm({ exercise, copyOf, isAdmin, onClose, onSaved }: { exercis
             </Field>
           </FormSection>
 
-          <FormSection title="Phân loại" desc="Dùng cho bộ lọc trong thư viện và khi HLV soạn giáo án.">
+          <FormSection id="class" active={tab}>
             <Field label="Nhóm cơ chính" required>
               <Select value={f.muscleGroup} onChange={(e) => set('muscleGroup', e.target.value as MuscleGroup)}>{GROUPS.map((g) => <option key={g} value={g}>{muscleLabel[g]}</option>)}</Select>
             </Field>
@@ -398,7 +435,7 @@ function ExerciseForm({ exercise, copyOf, isAdmin, onClose, onSaved }: { exercis
             </div>
           </FormSection>
 
-          <FormSection title="Hướng dẫn tập">
+          <FormSection id="guide" active={tab}>
             <Field label="Hướng dẫn thực hiện" className="span-2" hint="Mỗi bước một dòng, VD: 1. Đứng thẳng…">
               <Textarea maxLength={2000} rows={5} value={f.instructions} onChange={(e) => set('instructions', e.target.value)} />
               <Count value={f.instructions} max={2000} />
@@ -417,7 +454,7 @@ function ExerciseForm({ exercise, copyOf, isAdmin, onClose, onSaved }: { exercis
             </Field>
           </FormSection>
 
-          <FormSection title="An toàn và liều tập">
+          <FormSection id="safety" active={tab}>
             <Field label="Lưu ý an toàn" className="span-2">
               <Textarea maxLength={2000} rows={3} value={f.safetyNotes} onChange={(e) => set('safetyNotes', e.target.value)} />
               <Count value={f.safetyNotes} max={2000} />
@@ -425,7 +462,7 @@ function ExerciseForm({ exercise, copyOf, isAdmin, onClose, onSaved }: { exercis
             <Field label="Liều gợi ý" hint="Chỉ ghi khi có nguồn; để trống sẽ hiện “Chưa có dữ liệu”" className="span-2"><Input maxLength={255} value={f.suggestedDose} onChange={(e) => set('suggestedDose', e.target.value)} /></Field>
           </FormSection>
 
-          <FormSection title="Nguồn và giấy phép">
+          <FormSection id="source" active={tab}>
             <Field label="Nguồn gốc nội dung" className="span-2">
               <Select value={f.contentOrigin} onChange={(e) => set('contentOrigin', e.target.value as ContentOrigin)}>
                 <option value="SELF_AUTHORED">{t('Tự biên soạn')}</option>

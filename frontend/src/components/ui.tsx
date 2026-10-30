@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
+import { createPortal } from 'react-dom';
 import { locale, t, tx } from '../i18n';
 import { hueOf, initials, type Tone } from '../lib/format';
 import { Icon, type IconName } from './Icon';
@@ -152,7 +153,7 @@ export function Segmented<T extends string>({ value, options, onChange }: { valu
 }
 
 // ---------- Modal ----------
-export function Modal({ title, onClose, children, footer, size }: { title: ReactNode; onClose: () => void; children: ReactNode; footer?: ReactNode; size?: 'wide' | 'narrow' }) {
+export function Modal({ title, onClose, children, footer, size }: { title: ReactNode; onClose: () => void; children: ReactNode; footer?: ReactNode; size?: 'wide' | 'medium' | 'narrow' }) {
   const ref = useRef<HTMLDivElement>(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
@@ -164,7 +165,9 @@ export function Modal({ title, onClose, children, footer, size }: { title: React
     ref.current?.querySelector<HTMLElement>('input, select, textarea')?.focus();
     return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = prev; };
   }, []);
-  return (
+  // Vẽ thẳng vào <body>: nếu nằm trong phần tử cha có transform/animation (VD .page), position: fixed sẽ bám theo
+  // phần tử cha thay vì màn hình → khung bị đẩy xuống dưới, mất nút Lưu, người dùng phải thu nhỏ trình duyệt mới thấy.
+  return createPortal(
     <div className="overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className={`modal ${size ?? ''}`} role="dialog" aria-modal="true" ref={ref}>
         <div className="modal-head">
@@ -174,7 +177,8 @@ export function Modal({ title, onClose, children, footer, size }: { title: React
         <div className="modal-body">{children}</div>
         {footer && <div className="modal-foot">{footer}</div>}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

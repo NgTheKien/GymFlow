@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import type { ArticleSummary, MembershipPlan } from '../api/types';
@@ -13,6 +13,10 @@ import { ThemeToggle } from '../theme/ThemeToggle';
 import { t } from '../i18n';
 
 const DISCIPLINES = ['Thể hình', 'Giảm mỡ', 'Sức mạnh', 'Powerlifting', 'Yoga', 'Phục hồi', 'Cardio', 'PT 1 kèm 1'];
+
+// Ba nhịp tim (sóng P-QRS-T) trên chiều dài 1200 đơn vị, nền phẳng ở y = 70
+const beat = (x: number) => `L${x} 70 L${x + 14} 64 L${x + 28} 70 L${x + 40} 70 L${x + 48} 82 L${x + 60} 18 L${x + 72} 96 L${x + 82} 70 L${x + 104} 70 L${x + 124} 58 L${x + 144} 70`;
+const ECG_PATH = `M0 70 ${beat(140)} ${beat(560)} ${beat(940)} L1200 70`;
 
 const PROGRAMS: { icon: IconName; title: string; desc: string }[] = [
   { icon: 'flame', title: 'Thể hình & giảm mỡ', desc: 'Giáo án theo tuần, kết hợp tạ và cardio, đo lại cân nặng – % mỡ định kỳ.' },
@@ -59,6 +63,33 @@ export default function Landing() {
   const latest = articles.data?.slice(0, 3) ?? [];
   const best = plans.data && plans.data.length > 2 ? plans.data[1].id : null;
   const [menu, setMenu] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  // Hiện dần khi cuộn tới. Chỉ ẩn nội dung sau khi JS đã chạy (class reveal-on), nên lỗi JS không làm mất nội dung.
+  // Chạy lại khi bảng giá / bài viết tải xong để bắt cả các thẻ vừa được vẽ thêm.
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root || !('IntersectionObserver' in window)) return;
+    root.classList.add('reveal-on');
+    const io = new IntersectionObserver((entries) => entries.forEach((en) => {
+      if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
+    }), { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
+    root.querySelectorAll<HTMLElement>('.reveal:not(.in)').forEach((el, i) => {
+      el.style.setProperty('--reveal-delay', `${(i % 4) * 70}ms`);
+      io.observe(el);
+    });
+    return () => io.disconnect();
+  }, [plans.data, articles.data]);
+
+  // Ánh sáng đi theo con trỏ trên các thẻ .spot (lấy ý tưởng "cursor light" của libraries.dev/metal)
+  const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== 'mouse') return;
+    const card = (e.target as HTMLElement).closest<HTMLElement>('.spot');
+    if (!card) return;
+    const r = card.getBoundingClientRect();
+    card.style.setProperty('--mx', `${e.clientX - r.left}px`);
+    card.style.setProperty('--my', `${e.clientY - r.top}px`);
+  };
 
   useEffect(() => {
     if (!menu) return;
@@ -72,7 +103,8 @@ export default function Landing() {
     : <Link className="btn btn-primary btn-lg" to="/register"><span>{t('Đăng ký hội viên')}</span><Icon name="arrowRight" /></Link>;
 
   return (
-    <div className="public">
+    <div className="public" ref={rootRef} onPointerMove={onPointerMove}>
+      <div className="scroll-progress" aria-hidden />
       <nav className="landing-nav">
         <Link to="/" aria-label={`${SITE.name} – ${t('trang chủ')}`}><Brand /></Link>
         <div className={`nav-links ${menu ? 'open' : ''}`} onClick={() => setMenu(false)}>
@@ -100,6 +132,13 @@ export default function Landing() {
       <header className="hero-x">
         <div className="hero-bg" aria-hidden><span>GYMFLOW</span></div>
         <div className="hero-slashes" aria-hidden><i /><i /><i /></div>
+        <div className="hero-glow" aria-hidden><i /><i /></div>
+        <div className="hero-speed" aria-hidden><i /><i /><i /><i /></div>
+        {/* Đường điện tim chạy ngang hero: một vệt sáng di chuyển trên nền đường mờ */}
+        <svg className="hero-ecg" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden>
+          <path className="ecg-base" d={ECG_PATH} />
+          <path className="ecg-pulse" d={ECG_PATH} pathLength={1000} />
+        </svg>
         <div className="hero-inner">
           <div className="hero-copy">
             <div className="kicker">{t('Phòng tập · Huấn luyện viên · Tiến độ')}</div>
@@ -111,11 +150,25 @@ export default function Landing() {
             </div>
           </div>
           <div className="hero-visual" aria-hidden>
-            {/* Số liệu trong các thẻ chỉ để minh hoạ giao diện ứng dụng, không phải kết quả hội viên thật */}
-            <span className="hv-note">{t('Giao diện minh hoạ')}</span>
-            <div className="hv-card hv-1">
-              <div className="row" style={{ gap: 8 }}><Icon name="flame" className="ok" /><span className="tiny muted">{t('Chuỗi tập')}</span></div>
-              <div className="hv-num">6 <small>{t('tuần liên tiếp')}</small></div>
+            {/* Ảnh minh hoạ giao diện ứng dụng (aria-hidden). Ba vòng ứng với dữ liệu GymFlow ghi thật:
+                số buổi tập trong tuần, phút vận động (mục tiêu 150 phút/tuần theo khuyến nghị cho người lớn) và calo ghi sau buổi tập. */}
+            <div className="hv-card hv-1 hv-rings">
+              <div className="row between" style={{ gap: 8 }}>
+                <span className="row tiny muted" style={{ gap: 6 }}><Icon name="heart" size={15} className="beat" />{t('Hoạt động tuần này')}</span>
+                <span className="hv-streak"><Icon name="flame" size={13} />6</span>
+              </div>
+              <div className="row" style={{ gap: 14, marginTop: 10 }}>
+                <svg viewBox="0 0 100 100" className="rings">
+                  <circle className="ring-bg" cx="50" cy="50" r="42" /><circle className="ring r1" cx="50" cy="50" r="42" pathLength={100} />
+                  <circle className="ring-bg" cx="50" cy="50" r="31" /><circle className="ring r2" cx="50" cy="50" r="31" pathLength={100} />
+                  <circle className="ring-bg" cx="50" cy="50" r="20" /><circle className="ring r3" cx="50" cy="50" r="20" pathLength={100} />
+                </svg>
+                <div className="ring-legend">
+                  <div><i className="r1" />{t('Buổi tập')} <b>3/4</b></div>
+                  <div><i className="r2" />{t('Phút vận động')} <b>120/150</b></div>
+                  <div><i className="r3" />{t('Calo')} <b>1.450</b></div>
+                </div>
+              </div>
             </div>
             <div className="hv-card hv-2">
               <div className="tiny muted">{t('Buổi tiếp theo')}</div>
@@ -142,7 +195,7 @@ export default function Landing() {
         <h2 className="display-sm">{t('Chọn mục tiêu. Chúng tôi lo lộ trình.')}</h2>
         <div className="grid grid-4 mt-24">
           {PROGRAMS.map((p, i) => (
-            <article key={p.title} className="program">
+            <article key={p.title} className="program spot beam beam-hover reveal">
               <span className="program-no">{String(i + 1).padStart(2, '0')}</span>
               <Icon name={p.icon} size={26} className="ok" />
               <h3>{t(p.title)}</h3>
@@ -155,9 +208,9 @@ export default function Landing() {
       <section className="section" id="benefits">
         <div className="kicker">{t('Quyền lợi hội viên')}</div>
         <h2 className="display-sm">{t('Mọi buổi tập đều được ghi lại.')}</h2>
-        <div className="grid grid-3 mt-24">
+        <div className="bento mt-24">
           {BENEFITS.map((b) => (
-            <div key={b.title} className="benefit">
+            <div key={b.title} className="benefit spot reveal">
               <div className="benefit-ic"><Icon name={b.icon} /></div>
               <div>
                 <h3>{t(b.title)}</h3>
@@ -173,7 +226,7 @@ export default function Landing() {
         <h2 className="display-sm">{t('Ba bước để bắt đầu.')}</h2>
         <ol className="steps mt-24">
           {STEPS.map((s, i) => (
-            <li key={s.title}>
+            <li key={s.title} className="reveal">
               <span className="step-no">{i + 1}</span>
               <h3>{t(s.title)}</h3>
               <p className="muted small">{t(s.desc)}</p>
@@ -191,7 +244,7 @@ export default function Landing() {
           {plans.error && <p className="muted">{t('Chưa tải được bảng giá. Vui lòng tải lại trang sau ít phút.')}</p>}
           {plans.data?.length === 0 && <p className="muted">{t('Bảng giá đang được cập nhật.')}</p>}
           {plans.data?.map((p) => (
-            <article key={p.id} className={`card price-card hoverable ${p.id === best ? 'best beam' : ''}`}>
+            <article key={p.id} className={`card price-card hoverable spot reveal ${p.id === best ? 'best beam' : ''}`}>
               {p.id === best && <span className="ribbon">{t('PHỔ BIẾN')}</span>}
               <div className="kicker" style={{ marginBottom: 0 }}>{durationLabel(p.durationDays)}</div>
               <h3 style={{ fontSize: 20 }}>{t(p.name)}</h3>
@@ -216,7 +269,7 @@ export default function Landing() {
       <section className="section">
         <div className="trust-strip">
           {TRUST.map((x) => (
-            <div key={x.title} className="trust-item">
+            <div key={x.title} className="trust-item reveal">
               <Icon name={x.icon} className="ok" />
               <div>
                 <b>{t(x.title)}</b>
@@ -240,7 +293,7 @@ export default function Landing() {
         {latest.length > 0 && (
           <div className="article-grid mt-24">
             {latest.map((a) => (
-              <Link key={a.id} to={`/knowledge/${a.slug}`} className="article-card">
+              <Link key={a.id} to={`/knowledge/${a.slug}`} className="article-card spot reveal">
                 <span className="kicker">{articleCategoryLabel[a.category]}</span>
                 <h3>{a.title}</h3>
                 <p className="small muted">{a.summary}</p>
@@ -257,7 +310,7 @@ export default function Landing() {
       <section className="section" id="faq">
         <div className="kicker">{t('Hỏi đáp')}</div>
         <h2 className="display-sm">{t('Câu hỏi thường gặp.')}</h2>
-        <div className="faq mt-24">
+        <div className="faq mt-24 reveal">
           {FAQ.map((f) => (
             <details key={f.q}>
               <summary>{t(f.q)}<Icon name="chevronDown" size={18} /></summary>

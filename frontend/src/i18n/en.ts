@@ -959,4 +959,11 @@ export const EN: Record<string, string> = {
   'Mọi gói tập': 'All plans',
   'Tìm tiêu đề, đường dẫn, tác giả…': 'Search title, slug, author…',
   'Mọi chủ đề': 'All topics',
+  'Trước': 'Back',
+  'Tiếp': 'Next',
+  'Các phần của bài tập': 'Exercise sections',
+  'Có lỗi': 'Has errors',
+  'Hoạt động tuần này': 'This week',
+  'Buổi tập': 'Sessions',
+  'Phút vận động': 'Active minutes',
 };
